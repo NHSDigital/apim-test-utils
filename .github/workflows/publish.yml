@@ -21,7 +21,7 @@ jobs:
     - name: upgrade pip and install poetry
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install poetry
+        pip install poetry dephell
 
     - name: Cache poetry packages
       uses: actions/cache@v1
@@ -33,7 +33,7 @@ jobs:
       run: |
         make install
 
-    - name: set PACKAGE_VERSION and replace version
+    - name: manage version data and create dist
       run: |
         # remove the leading 'v'
         export PACKAGE_VERSION="$(poetry run python scripts/calculate_version.py)"
@@ -42,16 +42,7 @@ jobs:
 
         sed -e "s/version = \"0.0.0\"/version = \"${VERSION}\"/" -i pyproject.toml
         sed -e "s/__version__ = \"0.0.0\"/__version__ = \"${VERSION}\"/" -i api_test_utils/__init__.py
-
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-
-    - name: run dephell to create setup.py
-      uses: dephell/dephell_action@master
-
-    - name: build dist and set WHL_FILE WHL_NAME
-      run: |
-
+        dephell deps convert
         make dist
         echo ::set-env name=WHL_FILE::$(find dist -type f -name '*.whl')
         echo ::set-env name=WHL_NAME::$(find dist -type f -name '*.whl' | sed 's#dist/##')
