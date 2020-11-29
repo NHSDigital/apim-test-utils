@@ -24,7 +24,7 @@ clean:
 dist: clean
 	sed -e "s/version = \"0.0.0\"/version = \"$${VERSION}\"/" -i pyproject.toml
 	sed -e "s/__version__ = \"0.0.0\"/__version__ = \"$${VERSION}\"/" -i api_test_utils/__init__.py
-	$(activate) dephell deps convert --from=poetry  --to=setup.py
+	$(activate) dephell deps convert
 	poetry build
 
 
