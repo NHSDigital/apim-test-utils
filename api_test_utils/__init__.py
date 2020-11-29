@@ -1,44 +1,46 @@
 from typing import Callable, Any, Awaitable, List, Tuple
+from json import JSONDecodeError
+
 import asyncio
 from aiohttp import ClientResponse, ContentTypeError
-from json import JSONDecodeError
 
 from multidict import CIMultiDictProxy
 
-
-async def is_200(r: ClientResponse):
-    return r.status == 200
+__version__ = "0.0.0"
 
 
-async def is_404(r: ClientResponse):
-    return r.status == 404
+async def is_200(resp: ClientResponse):
+    return resp.status == 200
 
 
-async def get_text_body(r: ClientResponse) -> str:
-    return await r.text()
+async def is_404(resp: ClientResponse):
+    return resp.status == 404
 
 
-async def get_json_body(r: ClientResponse):
-    return await r.json()
+async def get_text_body(resp: ClientResponse) -> str:
+    return await resp.text()
 
 
-async def get_bytes_body(r: ClientResponse) -> bytes:
-    return await r.read()
+async def get_json_body(resp: ClientResponse):
+    return await resp.json()
 
 
-async def auto_load_body(r: ClientResponse):
-    #ContentTypeError
-    content_type = r.content_type.lower()
+async def get_bytes_body(resp: ClientResponse) -> bytes:
+    return await resp.read()
+
+
+async def auto_load_body(resp: ClientResponse):
+    content_type = resp.content_type.lower()
     if 'json' in content_type:
         try:
-            return await get_json_body(r)
+            return await get_json_body(resp)
         except (ContentTypeError, JSONDecodeError):
-            return await get_text_body(r)
+            return await get_text_body(resp)
 
     if 'text' in content_type or 'xml' in content_type:
-        return await get_text_body(r)
+        return await get_text_body(resp)
 
-    return await get_bytes_body(r)
+    return await get_bytes_body(resp)
 
 
 class PollTimeoutError(TimeoutError):
@@ -86,15 +88,15 @@ async def poll_until(
 
         while True:
 
-            async with make_request() as r:
+            async with make_request() as response:
 
                 body = None
 
                 if body_resolver is not None:
-                    body = await body_resolver(r)
+                    body = await body_resolver(response)
 
-                responses.append((r.status, r.headers, body))
-                should_stop = await until(r)
+                responses.append((response.status, response.headers, body))
+                should_stop = await until(response)
                 if not should_stop:
                     await asyncio.sleep(sleep_for)
                     continue
