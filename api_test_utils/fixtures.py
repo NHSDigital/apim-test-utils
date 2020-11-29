@@ -12,6 +12,3 @@ async def api_client(api_test_config: APITestSessionConfig):
     yield session_client
 
     await session_client.close()
-
-
-

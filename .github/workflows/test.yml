@@ -28,9 +28,19 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install poetry
 
+    - name: cache packages
+      uses: actions/cache@v1
+      with:
+          path: ~/.venv
+          key: ${{ runner.os }}-build-cache-poetry-packages-${{ hashFiles('**/poetry.lock') }}
+
     - name: install dependencies
       run: |
         make install
+
+    - name: check lint
+      run: |
+        make lint
 
     - name: run tests
       run: |

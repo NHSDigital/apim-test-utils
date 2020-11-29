@@ -18,7 +18,7 @@ class APISessionClient:
         return self
 
     def _full_url(self, url: StrOrURL) -> StrOrURL:
-        if type(url) != str:
+        if not isinstance(url, str) :
             return url
 
         parsed = urlparse(url)
@@ -55,5 +55,3 @@ class APISessionClient:
             exc_tb: Optional[TracebackType],
     ) -> None:
         await self.close()
-
-

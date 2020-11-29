@@ -24,8 +24,13 @@ clean:
 dist: clean
 	poetry build
 
+build: dist
+
+lint:
+	$(activate) pylint --output-format=parseable --rcfile=pylint.rc --score=no api_test_utils tests
+
 test:
-	$(activate) pytest --rootdir=./tests
+	$(activate) pytest
 
 coverage:
 	rm -f reports/tests.xml  > /dev/null || true
