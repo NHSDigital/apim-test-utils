@@ -35,23 +35,22 @@ jobs:
 
     - name: Set PACKAGE_VERSION env var
       run: echo ::set-env name=PACKAGE_VERSION::$(poetry run python scripts/calculate_version.py)
+
+
+    - name: set PACKAGE_VERSION, replace version and make dist
+      run: |
+        # remove the leading 'v'
+        export PACKAGE_VERSION="$(poetry run python scripts/calculate_version.py)"
+        echo ::set-env name=PACKAGE_VERSION::${PACKAGE_VERSION}
+        export VERSION="$(echo ${PACKAGE_VERSION} | sed 's/v//')"
+        make dist
+        echo ::set-env name=WHL_FILE::$(find dist -type f -name '*.whl')
+        echo ::set-env name=WHL_NAME::$(find dist -type f -name '*.whl' | sed 's#dist/##')
       env:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
-    - name: replace version and make dist
-      run: |
-        # remove the leading 'v'
-        export VERSION="$(echo ${PACKAGE_VERSION} | sed 's/v//')"
-        sed -e "s/version = \"0.0.0\"/version = \"${VERSION}\"/" -i pyproject.toml
-        sed -e "s/__version__ = \"0.0.0\"/__version__ = \"${VERSION}\"/" -i api_test_utils/__init__.py
-        make dist
-
-    - uses: actions/upload-artifact@v2
-      with:
-        path: dist/
-
     - name: create release
-      id: create-release
+      id: create_release
       if: github.ref == 'refs/heads/master'
       uses: actions/create-release@v1
       continue-on-error: true
@@ -61,3 +60,13 @@ jobs:
         tag_name: ${{ env.PACKAGE_VERSION }}
         release_name: ${{ env.PACKAGE_VERSION }}
 
+    - name: upload whl
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+      upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+      asset_path: ${{ env.WHL_FILE }}
+      asset_name: ${{ env.WHL_NAME }}
+      asset_content_type: application/zip
