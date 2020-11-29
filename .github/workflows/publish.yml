@@ -33,10 +33,6 @@ jobs:
       run: |
         make install
 
-    - name: Set PACKAGE_VERSION env var
-      run: echo ::set-env name=PACKAGE_VERSION::$(poetry run python scripts/calculate_version.py)
-
-
     - name: set PACKAGE_VERSION, replace version and make dist
       run: |
         # remove the leading 'v'
