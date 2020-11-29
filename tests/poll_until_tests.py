@@ -94,7 +94,7 @@ async def test_wait_for_200_json_deflate(api_client: APISessionClient):
     assert body['deflated'] is True
 
 
-@pytest.mark.skip('we probably do not need brotli support just yet, but if we do .. add brotlipy')
+# @pytest.mark.skip('we probably do not need brotli support just yet, but if we do .. add brotlipy')
 @pytest.mark.asyncio
 async def test_wait_for_200_json_brotli(api_client: APISessionClient):
 
