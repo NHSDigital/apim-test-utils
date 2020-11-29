@@ -1,0 +1,53 @@
+
+# IDE and various other developer tools
+.vscode
+.idea
+.ipynb_checkpoints
+*.swp
+
+
+# Misc
+!.gitkeep
+*.orig
+*.squashfs
+*.retry
+
+# node
+node_modules/
+
+
+# Packaging
+build/
+dist/
+utils/
+
+
+# certs/keys/pems
+*.crt
+*.csr
+*.key
+*.pem
+*.pfx
+*.srl*
+*.csr.cfg
+*id_rsa*
+
+
+# Big binaries
+*.bz2
+*.gz
+*.jar
+*.tar.gz
+*.tgz
+*.zip
+
+# tests
+reports/
+
+# python
+*.egg-info/
+.venv/
+.pytest_cache/
+*.pyc
+.coverage
+__pycache__/
