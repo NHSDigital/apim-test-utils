@@ -15,12 +15,12 @@ def api_test_config() -> APITestSessionConfig:
 @pytest.mark.asyncio
 async def test_wait_for_poll_does_timeout(api_client: APISessionClient):
 
-    with pytest.raises(PollTimeoutError) as xi:
+    with pytest.raises(PollTimeoutError) as exec_info:
         await poll_until(lambda: api_client.get('status/404'), timeout=1, sleep_for=0.3)
 
-    x = xi.value  # type: PollTimeoutError
-    assert len(x.responses) > 0
-    assert x.responses[0][0] == 404
+    error = exec_info.value  # type: PollTimeoutError
+    assert len(error.responses) > 0
+    assert error.responses[0][0] == 404
 
 
 @pytest.mark.asyncio
@@ -34,7 +34,7 @@ async def test_wait_for_200_bytes(api_client: APISessionClient):
 
     assert status == 200
     assert headers.get('Content-Type').split(';')[0] == 'application/octet-stream'
-    assert type(body) == bytes
+    assert isinstance(body, bytes)
 
 
 @pytest.mark.asyncio
@@ -62,7 +62,7 @@ async def test_wait_for_200_html(api_client: APISessionClient):
 
     assert status == 200
     assert headers.get('Content-Type').split(';')[0] == 'text/html'
-    assert type(body) == str
+    assert isinstance(body, str)
     assert body.startswith('<!DOCTYPE html>')
 
 

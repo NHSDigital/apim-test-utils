@@ -27,7 +27,7 @@ dist: clean
 build: dist
 
 lint:
-	$(activate) pylint --output-format=parseable --rcfile=pylint.rc --score=no api_test_utils tests
+	$(activate) pylint --output-format=parseable --rcfile=pylint.rc api_test_utils tests
 
 test:
 	$(activate) pytest
