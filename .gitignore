@@ -51,3 +51,5 @@ reports/
 *.pyc
 .coverage
 __pycache__/
+# auto generated from toml
+setup.py
