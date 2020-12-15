@@ -1,6 +1,6 @@
-from api_test_utils.api_session_client import APISessionClient
 from typing import List
 from os import environ
+from api_test_utils.api_session_client import APISessionClient
 
 
 class ApigeeApiDeveloperApps:
@@ -81,8 +81,8 @@ class ApigeeApiDeveloperApps:
 
                 body = await resp.json()
                 if resp.status == 409:
+                    # allow the code to continue instead of throwing an error
                     print(f'The app "{app_name}" already exists!')
-                    pass  # allow the code to continue instead of throwing an error
                 elif resp.status != 201:
                     headers = dict(resp.headers.items())
                     self._throw_friendly_error(message=f"unable to create app: {app_name}",
