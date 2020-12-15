@@ -10,7 +10,7 @@ class ApigeeApiDeveloperApps:
         self.org_name = org_name
         self.developer_email = developer_email
 
-        self.base_uri = f"https://api.enterprise.apigee.com/v1/organizations/" \
+        self.base_uri = "https://api.enterprise.apigee.com/v1/organizations/" \
                         f"{self.org_name}/developers/{self.developer_email}"
 
         self.default_params = {
@@ -71,7 +71,7 @@ class ApigeeApiDeveloperApps:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"apps",
+            async with session.post("apps",
                                     params=self.default_params,
                                     headers=self.headers,
                                     json=data) as resp:

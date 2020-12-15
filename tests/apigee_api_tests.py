@@ -25,7 +25,7 @@ async def setup(apigee):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures('setup')
-async def test_appigee_get_custom_attributes(apigee):
+async def test_apigee_get_custom_attributes(apigee):
     resp = await apigee.get_custom_attributes(app_name='auto_generated_app_by_apim_test_utils')
     assert resp['attribute'] == [
         {'name': 'DisplayName', 'value': 'auto_generated_app_by_apim_test_utils'},
@@ -35,7 +35,7 @@ async def test_appigee_get_custom_attributes(apigee):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures('setup')
-async def test_appigee_update_custom_attribute(apigee):
+async def test_apigee_update_custom_attribute(apigee):
     resp = await apigee.update_custom_attribute(app_name='auto_generated_app_by_apim_test_utils',
                                                 attribute_name="Test",
                                                 attribute_value="Passed")
@@ -44,14 +44,14 @@ async def test_appigee_update_custom_attribute(apigee):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures('setup')
-async def test_appigee_delete_custom_attributes(apigee):
+async def test_apigee_delete_custom_attributes(apigee):
     resp = await apigee.delete_custom_attribute(app_name='auto_generated_app_by_apim_test_utils', attribute_name='Test')
     assert resp == {'name': 'Test', 'value': ''}
 
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures('setup')
-async def test_appigee_add_api_product_to_app(apigee):
+async def test_apigee_add_api_product_to_app(apigee):
     resp = await apigee.add_api_product(app_name='auto_generated_app_by_apim_test_utils',
                                         api_products=["internal-testing-internal-dev"])
     assert resp == [{'apiproduct': 'internal-testing-internal-dev', 'status': 'approved'}]
@@ -59,7 +59,7 @@ async def test_appigee_add_api_product_to_app(apigee):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures('setup')
-async def test_appigee_get_app_keys(apigee):
+async def test_apigee_get_app_keys(apigee):
     credentials = await apigee.get_app_keys(app_name='auto_generated_app_by_apim_test_utils')
     assert len(credentials['client_id']) == 32
     assert len(credentials['client_secret']) == 16
