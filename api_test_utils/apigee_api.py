@@ -1,6 +1,7 @@
 from api_test_utils.api_session_client import APISessionClient
 from typing import List
 from os import environ
+from aiohttp import ContentTypeError
 
 
 class ApigeeApiDeveloperApps:
@@ -75,7 +76,10 @@ class ApigeeApiDeveloperApps:
                                     params=self.default_params,
                                     headers=self.headers,
                                     json=data) as resp:
-                body = await resp.json()
+                try:
+                    body = await resp.json()
+                except ContentTypeError:
+                    raise Exception("Your token has expired or is invalid")
                 if resp.status == 409:
                     print(f'The app "{app_name}" already exists!')
                     pass  # allow the code to continue instead of throwing an error
@@ -112,7 +116,7 @@ class ApigeeApiDeveloperApps:
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
-                return body
+                return body['credentials'][0]['apiProducts']
 
     async def update_custom_attribute(self, app_name: str, attribute_name: str, attribute_value: str) -> dict:
         """ Update an existing custom attribute """

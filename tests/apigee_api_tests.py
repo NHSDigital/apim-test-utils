@@ -54,7 +54,7 @@ async def test_appigee_delete_custom_attributes(apigee):
 async def test_appigee_add_api_product_to_app(apigee):
     resp = await apigee.add_api_product(app_name='auto_generated_app_by_apim_test_utils',
                                         api_products=["internal-testing-internal-dev"])
-    assert resp['name'] == 'auto_generated_app_by_apim_test_utils'
+    assert resp == [{'apiproduct': 'internal-testing-internal-dev', 'status': 'approved'}]
 
 
 @pytest.mark.asyncio
