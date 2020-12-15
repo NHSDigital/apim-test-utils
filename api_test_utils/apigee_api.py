@@ -1,7 +1,6 @@
 from api_test_utils.api_session_client import APISessionClient
 from typing import List
 from os import environ
-from aiohttp import ContentTypeError
 
 
 class ApigeeApiDeveloperApps:
@@ -76,10 +75,11 @@ class ApigeeApiDeveloperApps:
                                     params=self.default_params,
                                     headers=self.headers,
                                     json=data) as resp:
-                try:
-                    body = await resp.json()
-                except ContentTypeError:
+
+                if resp.status in {401, 502}:  # 401 is an expired token while 502 is an invalid token
                     raise Exception("Your token has expired or is invalid")
+
+                body = await resp.json()
                 if resp.status == 409:
                     print(f'The app "{app_name}" already exists!')
                     pass  # allow the code to continue instead of throwing an error
