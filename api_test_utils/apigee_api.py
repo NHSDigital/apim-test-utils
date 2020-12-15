@@ -1,5 +1,6 @@
 from typing import List
 from os import environ
+from uuid import uuid4
 from api_test_utils.api_session_client import APISessionClient
 
 
@@ -9,6 +10,7 @@ class ApigeeApiDeveloperApps:
     def __init__(self, org_name: str = "nhsd-nonprod", developer_email: str = "apm-testing-internal-dev@nhs.net"):
         self.org_name = org_name
         self.developer_email = developer_email
+        self.app_name = f"apim-auto-app-${uuid4().hex}"
 
         self.base_uri = "https://api.enterprise.apigee.com/v1/organizations/" \
                         f"{self.org_name}/developers/{self.developer_email}"
@@ -48,7 +50,7 @@ class ApigeeApiDeveloperApps:
                 Exception('\nAttributes in incorrect format. '
                           'Please follow convention: List[ dict{ "name": str, "value": str } ... ]\n')
 
-    async def create_new_app(self, app_name: str, attributes: List[dict] = None,
+    async def create_new_app(self, attributes: List[dict] = None,
                              callback_url: str = "http://example.com") -> dict:
         """
         app_name: name of the application you want to create.
@@ -61,12 +63,12 @@ class ApigeeApiDeveloperApps:
         else:
             attributes = []
 
-        attributes.append({"name": "DisplayName", "value": app_name})
+        attributes.append({"name": "DisplayName", "value": self.app_name})
 
         data = {
             "attributes": attributes,
             "callbackUrl": callback_url,
-            "name": app_name,
+            "name": self.app_name,
             "status": "approved"
         }
 
@@ -82,46 +84,47 @@ class ApigeeApiDeveloperApps:
                 body = await resp.json()
                 if resp.status == 409:
                     # allow the code to continue instead of throwing an error
-                    print(f'The app "{app_name}" already exists!')
+                    print(f'The app "{self.app_name}" already exists!')
                 elif resp.status != 201:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to create app: {app_name}",
+                    self._throw_friendly_error(message=f"unable to create app: {self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body
 
-    async def add_api_product(self, app_name: str, api_products: list) -> dict:
+    async def add_api_product(self, api_products: list) -> dict:
         """ Add a number of API Products to an app """
         params = self.default_params.copy()
-        params['app_name'] = app_name
+        params['app_name'] = self.app_name
 
         data = {
             "apiProducts": api_products,
-            "name": app_name,
+            "name": self.app_name,
             "status": "approved"
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.put(f"apps/{app_name}",
+            async with session.put(f"apps/{self.app_name}",
                                    params=params,
                                    headers=self.headers,
                                    json=data) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to add api products {api_products} to app: {app_name}",
+                    self._throw_friendly_error(message=f"unable to add api products {api_products} to app: "
+                                                       f"{self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body['credentials'][0]['apiProducts']
 
-    async def update_custom_attribute(self, app_name: str, attribute_name: str, attribute_value: str) -> dict:
+    async def update_custom_attribute(self, attribute_name: str, attribute_value: str) -> dict:
         """ Update an existing custom attribute """
         params = self.default_params.copy()
-        params["app_name"] = app_name
+        params["app_name"] = self.app_name
         params["attribute_name"] = attribute_name
 
         data = {
@@ -129,89 +132,89 @@ class ApigeeApiDeveloperApps:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"apps/{app_name}/attributes/{attribute_name}",
+            async with session.post(f"apps/{self.app_name}/attributes/{attribute_name}",
                                     params=params,
                                     headers=self.headers,
                                     json=data) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to add custom attribute for app: {app_name}",
+                    self._throw_friendly_error(message=f"unable to add custom attribute for app: {self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body
 
-    async def delete_custom_attribute(self, app_name: str, attribute_name: str) -> dict:
+    async def delete_custom_attribute(self, attribute_name: str) -> dict:
         """ Delete a custom attribute """
         params = self.default_params.copy()
-        params["app_name"] = app_name
+        params["app_name"] = self.app_name
         params["attribute_name"] = attribute_name
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.delete(f"apps/{app_name}/attributes/{attribute_name}",
+            async with session.delete(f"apps/{self.app_name}/attributes/{attribute_name}",
                                       params=params,
                                       headers=self.headers) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to delete custom attribute for app: {app_name}",
+                    self._throw_friendly_error(message=f"unable to delete custom attribute for app: {self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body
 
-    async def get_custom_attributes(self, app_name: str) -> dict:
+    async def get_custom_attributes(self) -> dict:
         """ Get the list of custom attributes assigned to an app """
         async with APISessionClient(self.base_uri) as session:
-            async with session.get(f"apps/{app_name}/attributes", headers=self.headers) as resp:
+            async with session.get(f"apps/{self.app_name}/attributes", headers=self.headers) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to get custom attribute for app: {app_name}",
+                    self._throw_friendly_error(message=f"unable to get custom attribute for app: {self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body
 
-    async def get_app_details(self, app_name: str) -> dict:
+    async def get_app_details(self) -> dict:
         """ Return all available details for an app """
         async with APISessionClient(self.base_uri) as session:
-            async with session.get(f"apps/{app_name}", headers=self.headers) as resp:
+            async with session.get(f"apps/{self.app_name}", headers=self.headers) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to get app details for: {app_name}",
+                    self._throw_friendly_error(message=f"unable to get app details for: {self.app_name}",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
                 return body
 
-    async def get_app_keys(self, app_name: str) -> dict:
+    async def get_app_keys(self) -> dict:
         """ Returns an apps client id and client secret """
-        resp = await self.get_app_details(app_name)
+        resp = await self.get_app_details()
         credentials = resp['credentials'][0]
         client_id = credentials['consumerKey']
         secret_key = credentials['consumerSecret']
         return {'client_id': client_id, 'client_secret': secret_key}
 
-    async def get_callback_url(self, app_name: str) -> str:
+    async def get_callback_url(self) -> str:
         """ Get the callback url for a given app """
-        resp = await self.get_app_details(app_name)
+        resp = await self.get_app_details()
         return resp['callbackUrl']
 
-    async def destroy_app(self, app_name: str) -> dict:
+    async def destroy_app(self) -> dict:
         """ Delete an app """
         async with APISessionClient(self.base_uri) as session:
-            async with session.delete(f"apps/{app_name}", headers=self.headers) as resp:
+            async with session.delete(f"apps/{self.app_name}", headers=self.headers) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to delete app: {app_name}, PLEASE DELETE MANUALLY",
+                    self._throw_friendly_error(message=f"unable to delete app: {self.app_name}, PLEASE DELETE MANUALLY",
                                                url=resp.url,
                                                status_code=resp.status,
                                                response=body,
