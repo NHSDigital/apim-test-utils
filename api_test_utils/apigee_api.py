@@ -53,7 +53,6 @@ class ApigeeApiDeveloperApps:
     async def create_new_app(self, attributes: List[dict] = None,
                              callback_url: str = "http://example.com") -> dict:
         """
-        app_name: name of the application you want to create.
         attributes: a list of custom attributes and values e.g. [{"name": str, "value": str}]
         callback_url: the callback URL for the new app.
         """
@@ -95,7 +94,7 @@ class ApigeeApiDeveloperApps:
                 return body
 
     async def add_api_product(self, api_products: list) -> dict:
-        """ Add a number of API Products to an app """
+        """ Add a number of API Products to the app """
         params = self.default_params.copy()
         params['app_name'] = self.app_name
 
@@ -167,7 +166,7 @@ class ApigeeApiDeveloperApps:
                 return body
 
     async def get_custom_attributes(self) -> dict:
-        """ Get the list of custom attributes assigned to an app """
+        """ Get the list of custom attributes assigned to the app """
         async with APISessionClient(self.base_uri) as session:
             async with session.get(f"apps/{self.app_name}/attributes", headers=self.headers) as resp:
                 body = await resp.json()
@@ -181,7 +180,7 @@ class ApigeeApiDeveloperApps:
                 return body
 
     async def get_app_details(self) -> dict:
-        """ Return all available details for an app """
+        """ Return all available details for the app """
         async with APISessionClient(self.base_uri) as session:
             async with session.get(f"apps/{self.app_name}", headers=self.headers) as resp:
                 body = await resp.json()
@@ -195,7 +194,7 @@ class ApigeeApiDeveloperApps:
                 return body
 
     async def get_app_keys(self) -> dict:
-        """ Returns an apps client id and client secret """
+        """ Returns the client id and client secret """
         resp = await self.get_app_details()
         credentials = resp['credentials'][0]
         client_id = credentials['consumerKey']
@@ -203,12 +202,12 @@ class ApigeeApiDeveloperApps:
         return {'client_id': client_id, 'client_secret': secret_key}
 
     async def get_callback_url(self) -> str:
-        """ Get the callback url for a given app """
+        """ Get the callback url """
         resp = await self.get_app_details()
         return resp['callbackUrl']
 
     async def destroy_app(self) -> dict:
-        """ Delete an app """
+        """ Delete the app """
         async with APISessionClient(self.base_uri) as session:
             async with session.delete(f"apps/{self.app_name}", headers=self.headers) as resp:
                 body = await resp.json()
