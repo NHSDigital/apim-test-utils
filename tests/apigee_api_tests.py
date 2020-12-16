@@ -20,6 +20,7 @@ async def _api():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_custom_attributes(_api):
     resp = await _api.get_custom_attributes()
     assert resp['attribute'] == [
@@ -28,24 +29,28 @@ async def test_apigee_get_custom_attributes(_api):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_custom_attribute(_api):
     resp = await _api.set_custom_attributes(attributes={"Test": "Passed"})
     assert resp[1] == {'name': 'Test', 'value': 'Passed'}
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_delete_custom_attributes(_api):
     resp = await _api.delete_custom_attribute(attribute_name='DisplayName')
     assert resp == {'name': 'DisplayName', 'value': _api.app_name}
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_api_product_to_app(_api):
     resp = await _api.add_api_product(api_products=["internal-testing-internal-dev"])
     assert resp == [{'apiproduct': 'internal-testing-internal-dev', 'status': 'approved'}]
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_app_keys(_api):
     credentials = await _api.get_app_keys()
     assert len(credentials['client_id']) == 32
@@ -53,6 +58,7 @@ async def test_apigee_get_app_keys(_api):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_call_back_url(_api):
     callback_url = await _api.get_callback_url()
     assert callback_url == "http://example.com"
