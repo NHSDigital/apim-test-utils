@@ -1,4 +1,3 @@
-from typing import List
 from os import environ
 from uuid import uuid4
 from api_test_utils.api_session_client import APISessionClient
@@ -42,30 +41,11 @@ class ApigeeApiDeveloperApps:
                         f"HEADERS: {headers}\n"
                         f"{'*' * len(message)}\n")
 
-    @staticmethod
-    def _verify_attributes(attributes: List[dict]):
-        """Only 'name and 'value' are accepted as valid keys"""
-        for key in [attribute.keys() for attribute in attributes]:
-            if key != {'name', 'value'}:
-                Exception('\nAttributes in incorrect format. '
-                          'Please follow convention: List[ dict{ "name": str, "value": str } ... ]\n')
-
-    async def create_new_app(self, attributes: List[dict] = None,
-                             callback_url: str = "http://example.com") -> dict:
-        """
-        attributes: a list of custom attributes and values e.g. [{"name": str, "value": str}]
-        callback_url: the callback URL for the new app.
-        """
-
-        if attributes is not None:
-            self._verify_attributes(attributes)
-        else:
-            attributes = []
-
-        attributes.append({"name": "DisplayName", "value": self.app_name})
+    async def create_new_app(self, callback_url: str = "http://example.com") -> dict:
+        """ Create a new developer app in apigee """
 
         data = {
-            "attributes": attributes,
+            "attributes": [{"name": "DisplayName", "value": self.app_name}],
             "callbackUrl": callback_url,
             "name": self.app_name,
             "status": "approved"
@@ -119,6 +99,32 @@ class ApigeeApiDeveloperApps:
                                                response=body,
                                                headers=headers)
                 return body['credentials'][0]['apiProducts']
+
+    async def set_custom_attributes(self, attributes: dict) -> dict:
+        """ Replaces the current list of attributes with the attributes specified """
+        custom_attributes = [{"name": "DisplayName", "value": self.app_name}]
+
+        for key, value in attributes.items():
+            custom_attributes.append({"name": key, "value": value})
+
+        params = self.default_params.copy()
+        params['app_name'] = self.app_name
+
+        async with APISessionClient(self.base_uri) as session:
+            async with session.post(f"apps/{self.app_name}/attributes",
+                                    params=params,
+                                    headers=self.headers,
+                                    json={"attribute": custom_attributes}) as resp:
+                body = await resp.json()
+                if resp.status != 200:
+                    headers = dict(resp.headers.items())
+                    self._throw_friendly_error(message=f"unable to add custom attributes {attributes} to app: "
+                                                       f"{self.app_name}",
+                                               url=resp.url,
+                                               status_code=resp.status,
+                                               response=body,
+                                               headers=headers)
+                return body['attribute']
 
     async def update_custom_attribute(self, attribute_name: str, attribute_value: str) -> dict:
         """ Update an existing custom attribute """
