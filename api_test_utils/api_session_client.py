@@ -2,6 +2,7 @@ import os
 from types import TracebackType
 from typing import Optional, Type, Any
 from urllib.parse import urlparse
+import time
 
 import aiohttp
 from aiohttp.typedefs import StrOrURL
@@ -28,9 +29,27 @@ class APISessionClient:
         url = os.path.join(self.base_uri, url)
         return url
 
-    def get(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+    def _retry_429s(self, make_request):
+        fib_times = [0,1,1,2,3,5,8,13,21]
+        fib_index = 0
+        while True:
+            get_resp = make_request()
+            if get_resp.status == 429:
+                time.sleep(fib_times[fib_index])
+                fib_index += 1
+                if fib_index == len(fib_times)-1:
+                    return "Time out Error" # Replace with error exeption
+                continue
+            return get_resp
+
+    def get(self, url: StrOrURL, *, allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
-        return self.session.get(uri, allow_redirects=allow_redirects, **kwargs)
+        if allow_retries:
+            return self._retry_429s(lambda: self.session.get(uri, allow_redirects=allow_redirects, **kwargs))
+        else:
+            print(self.session.get(uri, allow_redirects=allow_redirects, **kwargs))
+            return self.session.get(uri, allow_redirects=allow_redirects, **kwargs)
+        
 
     def post(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
