@@ -49,7 +49,7 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
 
 
 @pytest.mark.asyncio
-async def test_200_with_allow_retries(api_client: APISessionClient):
+async def test_200_with_allow_retries():
     async with APISessionClient("https://httpbin.org") as session:
         async with await session.get("get", allow_retries=True) as resp:
             assert resp.status == 200
@@ -57,7 +57,7 @@ async def test_200_with_allow_retries(api_client: APISessionClient):
 
 # This test intentially takes at least 54 seconds to execute and might not be right for deploys
 @pytest.mark.asyncio
-async def test_429_with_allow_retries(api_client: APISessionClient):
+async def test_429_with_allow_retries():
     async with APISessionClient("https://httpbin.org") as session:
         with pytest.raises(TimeoutError) as excinfo:
             await session.get("status/429", allow_retries=True)
