@@ -29,39 +29,49 @@ class APISessionClient:
         url = os.path.join(self.base_uri, url)
         return url
 
-    def _retry_429s(self, make_request):
-        fib_times = [0,1,1,2,3,5,8,13,21]
+    async def _retry_429s(self, make_request):
+        fib_times = [0, 1, 1, 2, 3, 5, 8, 13, 21]
         fib_index = 0
+
         while True:
-            get_resp = make_request()
-            if get_resp.status == 429:
+            resp = await make_request()
+
+            if resp.status == 429:
                 time.sleep(fib_times[fib_index])
                 fib_index += 1
                 if fib_index == len(fib_times)-1:
-                    return "Time out Error" # Replace with error exeption
+                    return "Time out Error"  # Replace with error exeption
                 continue
-            return get_resp
 
-    def get(self, url: StrOrURL, *, allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+            return resp
+
+    async def get(self, url: StrOrURL, *, allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
         if allow_retries:
-            return self._retry_429s(lambda: self.session.get(uri, allow_redirects=allow_redirects, **kwargs))
+            return await self._retry_429s(lambda: self.session.get(uri, allow_redirects=allow_redirects, **kwargs))
         else:
-            print(self.session.get(uri, allow_redirects=allow_redirects, **kwargs))
-            return self.session.get(uri, allow_redirects=allow_redirects, **kwargs)
-        
+            return await self.session.get(uri, allow_redirects=allow_redirects, **kwargs)        
 
-    def post(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+    async def post(self, url: StrOrURL, *,  allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
-        return self.session.post(uri, allow_redirects=allow_redirects, **kwargs)
+        if allow_retries:
+            return await self._retry_429s(lambda: self.session.post(uri, allow_redirects=allow_redirects, **kwargs))
+        else:
+            return await self.session.post(uri, allow_redirects=allow_redirects, **kwargs)
 
-    def put(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+    async def put(self, url: StrOrURL, *, allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
-        return self.session.put(uri, allow_redirects=allow_redirects, **kwargs)
+        if allow_retries:
+            return await self._retry_429s(lambda: self.session.put(uri, allow_redirects=allow_redirects, **kwargs))
+        else:
+            return await self.session.put(uri, allow_redirects=allow_redirects, **kwargs)
 
-    def delete(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+    async def delete(self, url: StrOrURL, *, allow_retries: bool = False, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
         uri = self._full_url(url)
-        return self.session.delete(uri, allow_redirects=allow_redirects, **kwargs)
+        if allow_retries:
+            return await self._retry_429s(lambda: self.session.delete(uri, allow_redirects=allow_redirects, **kwargs))
+        else:
+            return await self.session.delete(uri, allow_redirects=allow_redirects, **kwargs)
 
     async def close(self):
         await self.session.close()
