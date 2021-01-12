@@ -55,7 +55,21 @@ async def test_200_with_allow_retries():
             assert resp.status == 200
 
 
-# This test intentially takes at least 54 seconds to execute and might not be right for deploys
+@pytest.mark.asyncio
+async def test_429_without_allow_retries():
+    async with APISessionClient("https://httpbin.org") as session:
+        async with await session.get("status/429", allow_retries=False) as resp:
+            assert resp.status == 429
+
+
+@pytest.mark.asyncio
+async def test_503_without_allow_retries():
+    async with APISessionClient("https://httpbin.org") as session:
+        async with await session.get("status/503", allow_retries=False) as resp:
+            assert resp.status == 503
+
+
+@pytest.mark.slow
 @pytest.mark.asyncio
 async def test_429_with_allow_retries():
     async with APISessionClient("https://httpbin.org") as session:
@@ -63,9 +77,15 @@ async def test_429_with_allow_retries():
             await session.get("status/429", allow_retries=True)
 
         error = excinfo.value
-        assert "Time out on 429 retries" in str(error)
+        assert "Time out on request retries" in str(error)
 
-# Test other methods
-# Test other status'?
-# Test Functionality of _retry_429s in here?
-# How to simulate behaviour of different responses coming back?
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_503_with_allow_retries():
+    async with APISessionClient("https://httpbin.org") as session:
+        with pytest.raises(TimeoutError) as excinfo:
+            await session.get("status/503", allow_retries=True)
+
+        error = excinfo.value
+        assert "Time out on request retries" in str(error)
