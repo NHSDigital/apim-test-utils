@@ -29,30 +29,23 @@ class APISessionClient:
         url = os.path.join(self.base_uri, url)
         return url
 
-    async def _retry_requests(self, make_request):
-        try:
-            retry_codes = [429, 503]
-            fib_times = [0, 1, 1, 2, 3, 5, 8, 13, 21]
-            fib_index = 0
-            while True:
-                resp = await make_request()
-
-                if resp.status in retry_codes:
-                    time.sleep(fib_times[fib_index])
-                    fib_index += 1
-                    if fib_index == len(fib_times) - 1:
-                        raise TimeoutError
-                    continue
-
-                return resp
-        except TimeoutError as e:
-            raise TimeoutError("Time out on request retries") from e
+    async def _retry_requests(self, make_request, max_retries):
+        retry_codes = {429, 503}
+        for retry_number in range(max_retries):
+            resp = await make_request()
+            if resp.status in retry_codes:
+                time.sleep(2**retry_number - 1)
+                continue
+            return resp
+        else:
+            raise TimeoutError("Time out on request retries")
 
     def get(
         self,
         url: StrOrURL,
         *,
         allow_retries: bool = False,
+        max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
@@ -61,7 +54,8 @@ class APISessionClient:
             resp = self._retry_requests(
                 lambda: self.session.get(
                     uri, allow_redirects=allow_redirects, **kwargs
-                )
+                ),
+                max_retries=max_retries
             )
         else:
             resp = self.session.get(
@@ -74,6 +68,7 @@ class APISessionClient:
         url: StrOrURL,
         *,
         allow_retries: bool = False,
+        max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
@@ -82,7 +77,8 @@ class APISessionClient:
             resp = self._retry_requests(
                 lambda: self.session.post(
                     uri, allow_redirects=allow_redirects, **kwargs
-                )
+                ),
+                max_retries=max_retries
             )
         else:
             resp = self.session.post(
@@ -95,6 +91,7 @@ class APISessionClient:
         url: StrOrURL,
         *,
         allow_retries: bool = False,
+        max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
@@ -103,7 +100,8 @@ class APISessionClient:
             resp = self._retry_requests(
                 lambda: self.session.put(
                     uri, allow_redirects=allow_redirects, **kwargs
-                )
+                ),
+                max_retries=max_retries
             )
         else:
             resp = self.session.put(
@@ -116,6 +114,7 @@ class APISessionClient:
         url: StrOrURL,
         *,
         allow_retries: bool = False,
+        max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
@@ -124,7 +123,8 @@ class APISessionClient:
             resp = self._retry_requests(
                 lambda: self.session.delete(
                     uri, allow_redirects=allow_redirects, **kwargs
-                )
+                ),
+                max_retries=max_retries
             )
         else:
             resp = self.session.delete(

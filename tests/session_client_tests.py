@@ -74,7 +74,7 @@ async def test_503_without_allow_retries():
 async def test_429_with_allow_retries():
     async with APISessionClient("https://httpbin.org") as session:
         with pytest.raises(TimeoutError) as excinfo:
-            await session.get("status/429", allow_retries=True)
+            await session.get("status/429", allow_retries=True, max_retries=3)
 
         error = excinfo.value
         assert "Time out on request retries" in str(error)
@@ -85,7 +85,15 @@ async def test_429_with_allow_retries():
 async def test_503_with_allow_retries():
     async with APISessionClient("https://httpbin.org") as session:
         with pytest.raises(TimeoutError) as excinfo:
-            await session.get("status/503", allow_retries=True)
+            await session.get("status/503", allow_retries=True, max_retries=3)
 
         error = excinfo.value
         assert "Time out on request retries" in str(error)
+
+# Test other methods
+# How to simulate behaviour of different responses coming back? - override the request function to send the requests back (Only if have extra time as behaviour covered)
+
+# Parametrizing tests
+# Try exponential back off rather than fib
+# Python generators - how to generate next n in sequence
+# Do that with number of retries
