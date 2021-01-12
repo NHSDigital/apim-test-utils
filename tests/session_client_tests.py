@@ -49,51 +49,27 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
 
 
 @pytest.mark.asyncio
-async def test_200_with_allow_retries():
+@pytest.mark.parametrize("endpoint, should_retry, expected", [
+    ("get", True, 200),
+    ("status/429", False, 429),
+    ("status/503", False, 503)
+])
+async def test_status_code_retries(endpoint, should_retry, expected):
     async with APISessionClient("https://httpbin.org") as session:
-        async with await session.get("get", allow_retries=True) as resp:
-            assert resp.status == 200
-
-
-@pytest.mark.asyncio
-async def test_429_without_allow_retries():
-    async with APISessionClient("https://httpbin.org") as session:
-        async with await session.get("status/429", allow_retries=False) as resp:
-            assert resp.status == 429
-
-
-@pytest.mark.asyncio
-async def test_503_without_allow_retries():
-    async with APISessionClient("https://httpbin.org") as session:
-        async with await session.get("status/503", allow_retries=False) as resp:
-            assert resp.status == 503
+        async with await session.get(endpoint, allow_retries=should_retry) as resp:
+            assert resp.status == expected
 
 
 @pytest.mark.slow
 @pytest.mark.asyncio
-async def test_429_with_allow_retries():
+@pytest.mark.parametrize("endpoint, should_retry, expected_error", [
+    ("status/429", True, "Maxium retry limit hit."),
+    ("status/503", True, "Maxium retry limit hit.")
+])
+async def test_max_retries_limit(endpoint, should_retry, expected_error):
     async with APISessionClient("https://httpbin.org") as session:
         with pytest.raises(TimeoutError) as excinfo:
-            await session.get("status/429", allow_retries=True, max_retries=3)
+            await session.get(endpoint, allow_retries=should_retry, max_retries=3)
 
         error = excinfo.value
-        assert "Time out on request retries" in str(error)
-
-
-@pytest.mark.slow
-@pytest.mark.asyncio
-async def test_503_with_allow_retries():
-    async with APISessionClient("https://httpbin.org") as session:
-        with pytest.raises(TimeoutError) as excinfo:
-            await session.get("status/503", allow_retries=True, max_retries=3)
-
-        error = excinfo.value
-        assert "Time out on request retries" in str(error)
-
-# Test other methods
-# How to simulate behaviour of different responses coming back? - override the request function to send the requests back (Only if have extra time as behaviour covered)
-
-# Parametrizing tests
-# Try exponential back off rather than fib
-# Python generators - how to generate next n in sequence
-# Do that with number of retries
+        assert expected_error in str(error)

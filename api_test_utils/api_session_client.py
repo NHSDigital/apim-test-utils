@@ -38,7 +38,7 @@ class APISessionClient:
                 continue
             return resp
         else:
-            raise TimeoutError("Time out on request retries")
+            raise TimeoutError("Maxium retry limit hit.")
 
     def get(
         self,
