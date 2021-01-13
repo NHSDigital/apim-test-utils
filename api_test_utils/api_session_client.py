@@ -29,6 +29,30 @@ class APISessionClient:
         url = os.path.join(self.base_uri, url)
         return url
 
+    def _request(
+        self,
+        method: str,
+        url: StrOrURL,
+        *,
+        allow_retries: bool = False,
+        max_retries: int = 5,
+        allow_redirects: bool = True,
+        **kwargs: Any
+    ) -> "aoihttp._RequestContextManager":
+        uri = self._full_url(url)
+        if allow_retries:
+            resp = self._retry_requests(
+                lambda: self.session.request(
+                    method, uri, allow_redirects=allow_redirects, **kwargs
+                ),
+                max_retries=max_retries
+            )
+        else:
+            resp = self.session.request(
+                method, uri, allow_redirects=allow_redirects, **kwargs
+            )
+        return resp
+
     async def _retry_requests(self, make_request, max_retries):
         retry_codes = {429, 503}
         for retry_number in range(max_retries):
@@ -49,19 +73,14 @@ class APISessionClient:
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        if allow_retries:
-            resp = self._retry_requests(
-                lambda: self.session.get(
-                    uri, allow_redirects=allow_redirects, **kwargs
-                ),
-                max_retries=max_retries
-            )
-        else:
-            resp = self.session.get(
-                uri, allow_redirects=allow_redirects, **kwargs
-            )
-        return resp
+        return self._request(
+            method="GET",
+            url=url,
+            allow_retries=allow_retries,
+            max_retries=max_retries,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
 
     def post(
         self,
@@ -72,19 +91,14 @@ class APISessionClient:
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        if allow_retries:
-            resp = self._retry_requests(
-                lambda: self.session.post(
-                    uri, allow_redirects=allow_redirects, **kwargs
-                ),
-                max_retries=max_retries
-            )
-        else:
-            resp = self.session.post(
-                uri, allow_redirects=allow_redirects, **kwargs
-            )
-        return resp
+        return self._request(
+            method="POST",
+            url=url,
+            allow_retries=allow_retries,
+            max_retries=max_retries,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
 
     def put(
         self,
@@ -95,19 +109,14 @@ class APISessionClient:
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        if allow_retries:
-            resp = self._retry_requests(
-                lambda: self.session.put(
-                    uri, allow_redirects=allow_redirects, **kwargs
-                ),
-                max_retries=max_retries
-            )
-        else:
-            resp = self.session.put(
-                uri, allow_redirects=allow_redirects, **kwargs
-            )
-        return resp
+        return self._request(
+            method="PUT",
+            url=url,
+            allow_retries=allow_retries,
+            max_retries=max_retries,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
 
     def delete(
         self,
@@ -118,19 +127,14 @@ class APISessionClient:
         allow_redirects: bool = True,
         **kwargs: Any
     ) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        if allow_retries:
-            resp = self._retry_requests(
-                lambda: self.session.delete(
-                    uri, allow_redirects=allow_redirects, **kwargs
-                ),
-                max_retries=max_retries
-            )
-        else:
-            resp = self.session.delete(
-                uri, allow_redirects=allow_redirects, **kwargs
-            )
-        return resp
+        return self._request(
+            method="DELETE",
+            url=url,
+            allow_retries=allow_retries,
+            max_retries=max_retries,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
 
     async def close(self):
         await self.session.close()
