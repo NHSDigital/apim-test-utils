@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+import requests
+
 from api_test_utils.api_session_client import APISessionClient
 
 
@@ -54,7 +56,7 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
     ("status/429", False, 429),
     ("status/503", False, 503)
 ])
-async def test_status_code_retries(endpoint, should_retry, expected):
+async def test_get_status_code_retries(endpoint, should_retry, expected):
     async with APISessionClient("https://httpbin.org") as session:
         async with await session.get(endpoint, allow_retries=should_retry) as resp:
             assert resp.status == expected
@@ -73,3 +75,46 @@ async def test_max_retries_limit(endpoint, should_retry, expected_error):
 
         error = excinfo.value
         assert expected_error in str(error)
+
+
+class MockRequest:
+    """Class for returning multiple different function calls"""
+    def __init__(self, iterable):
+        self.iterator = iter(iterable)
+
+    async def __call__(self):
+        # async def f():
+        #     return next(self.iterator)
+        return next(self.iterator)
+
+
+class MockStatus:
+    """Mocks a Response status"""
+    def __init__(self, status):
+        self.status = status
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_codes, max_retries, expected_response", [
+    ([429, 429, 200, 200], 4, 200),
+    ([503, 429, 503, 200], 4, 200),
+])
+async def test_retry_request_varying_responses(status_codes, max_retries, expected_response):
+    async with APISessionClient("https://httpbin.org") as session:
+        mock_status_list = map(lambda code: MockStatus(code), status_codes)
+        requester = MockRequest(mock_status_list)
+        resp = await session._retry_requests(lambda: requester(), max_retries)
+        assert resp.status == expected_response
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_retry_request_varying_error():
+    async with APISessionClient("https://httpbin.org") as session:
+        mock_status_list = map(lambda code: MockStatus(code), [429, 429, 503])
+        requester = MockRequest(mock_status_list)
+        with pytest.raises(TimeoutError) as excinfo:
+            await session._retry_requests(lambda: requester(), max_retries=3)
+            error = excinfo.value
+            assert error == "Maxium retry limit hit."
