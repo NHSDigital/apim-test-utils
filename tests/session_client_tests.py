@@ -2,8 +2,6 @@ import json
 
 import pytest
 
-import requests
-
 from api_test_utils.api_session_client import APISessionClient
 
 
