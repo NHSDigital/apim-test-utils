@@ -81,8 +81,6 @@ class MockRequest:
         self.iterator = iter(iterable)
 
     async def __call__(self):
-        # async def f():
-        #     return next(self.iterator)
         return next(self.iterator)
 
 
