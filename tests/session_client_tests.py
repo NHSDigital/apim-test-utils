@@ -64,9 +64,9 @@ async def test_get_status_code_retries(endpoint, should_retry, expected):
 @pytest.mark.slow
 @pytest.mark.asyncio
 @pytest.mark.parametrize("endpoint, should_retry, expected_error", [
-    ("status/429", True, "Maxium retry limit hit."),
-    ("status/503", True, "Maxium retry limit hit."),
-    ("status/409", True, "Maxium retry limit hit.")
+    ("status/429", True, "Maximum retry limit hit."),
+    ("status/503", True, "Maximum retry limit hit."),
+    ("status/409", True, "Maximum retry limit hit.")
 ])
 async def test_max_retries_limit(endpoint, should_retry, expected_error):
     async with APISessionClient("https://httpbin.org") as session:
@@ -119,4 +119,4 @@ async def test_retry_request_varying_error():
         with pytest.raises(TimeoutError) as excinfo:
             await session._retry_requests(requester, max_retries=3) # pylint: disable=W0212
             error = excinfo.value
-            assert error == "Maxium retry limit hit."
+            assert error == "Maximum retry limit hit."

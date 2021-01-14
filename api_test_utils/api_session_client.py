@@ -1,15 +1,15 @@
 import os
+import asyncio
 from types import TracebackType
 from typing import Optional, Type, Any
 from urllib.parse import urlparse
-import asyncio
 
 import aiohttp
 from aiohttp.typedefs import StrOrURL
 
 
 class APISessionClient:
-    """ wrapper to configuration of a base url for aiohttp session client """
+    """Wrapper to configuration of a base url for aiohttp session client"""
 
     def __init__(self, base_uri, **kwargs):
         self.base_uri = base_uri
@@ -33,23 +33,23 @@ class APISessionClient:
         self,
         method: str,
         url: StrOrURL,
-        *,
+        *args,
         allow_retries: bool = False,
         max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
-    ) -> "aoihttp._RequestContextManager":
+    ) -> "aiohttp._RequestContextManager":
         uri = self._full_url(url)
         if allow_retries:
             resp = self._retry_requests(
                 lambda: self.session.request(
-                    method, uri, allow_redirects=allow_redirects, **kwargs
+                    method, uri, *args, allow_redirects=allow_redirects, **kwargs
                 ),
                 max_retries=max_retries
             )
         else:
             resp = self.session.request(
-                method, uri, allow_redirects=allow_redirects, **kwargs
+                method, uri, *args, allow_redirects=allow_redirects, **kwargs
             )
         return resp
 
@@ -61,79 +61,19 @@ class APISessionClient:
                 await asyncio.sleep(2**retry_number - 1)
                 continue
             return resp
-        raise TimeoutError("Maxium retry limit hit.")
+        raise TimeoutError("Maximum retry limit hit.")
 
-    def get(
-        self,
-        url: StrOrURL,
-        *,
-        allow_retries: bool = False,
-        max_retries: int = 5,
-        allow_redirects: bool = True,
-        **kwargs: Any
-    ) -> "aoihttp._RequestContextManager":
-        return self._request(
-            method="GET",
-            url=url,
-            allow_retries=allow_retries,
-            max_retries=max_retries,
-            allow_redirects=allow_redirects,
-            **kwargs
-        )
+    def get(self, *args, **kwargs):
+        return self._request('GET', *args, **kwargs)
 
-    def post(
-        self,
-        url: StrOrURL,
-        *,
-        allow_retries: bool = False,
-        max_retries: int = 5,
-        allow_redirects: bool = True,
-        **kwargs: Any
-    ) -> "aoihttp._RequestContextManager":
-        return self._request(
-            method="POST",
-            url=url,
-            allow_retries=allow_retries,
-            max_retries=max_retries,
-            allow_redirects=allow_redirects,
-            **kwargs
-        )
+    def post(self, *args, **kwargs):
+        return self._request('POST', *args, **kwargs)
 
-    def put(
-        self,
-        url: StrOrURL,
-        *,
-        allow_retries: bool = False,
-        max_retries: int = 5,
-        allow_redirects: bool = True,
-        **kwargs: Any
-    ) -> "aoihttp._RequestContextManager":
-        return self._request(
-            method="PUT",
-            url=url,
-            allow_retries=allow_retries,
-            max_retries=max_retries,
-            allow_redirects=allow_redirects,
-            **kwargs
-        )
+    def put(self, *args, **kwargs):
+        return self._request('PUT', *args, **kwargs)
 
-    def delete(
-        self,
-        url: StrOrURL,
-        *,
-        allow_retries: bool = False,
-        max_retries: int = 5,
-        allow_redirects: bool = True,
-        **kwargs: Any
-    ) -> "aoihttp._RequestContextManager":
-        return self._request(
-            method="DELETE",
-            url=url,
-            allow_retries=allow_retries,
-            max_retries=max_retries,
-            allow_redirects=allow_redirects,
-            **kwargs
-        )
+    def delete(self, *args, **kwargs):
+        return self._request('DELETE', *args, **kwargs)
 
     async def close(self):
         await self.session.close()
