@@ -52,7 +52,8 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
 @pytest.mark.parametrize("endpoint, should_retry, expected", [
     ("get", True, 200),
     ("status/429", False, 429),
-    ("status/503", False, 503)
+    ("status/503", False, 503),
+    ("status/409", False, 409)
 ])
 async def test_get_status_code_retries(endpoint, should_retry, expected):
     async with APISessionClient("https://httpbin.org") as session:
@@ -64,7 +65,8 @@ async def test_get_status_code_retries(endpoint, should_retry, expected):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("endpoint, should_retry, expected_error", [
     ("status/429", True, "Maxium retry limit hit."),
-    ("status/503", True, "Maxium retry limit hit.")
+    ("status/503", True, "Maxium retry limit hit."),
+    ("status/409", True, "Maxium retry limit hit.")
 ])
 async def test_max_retries_limit(endpoint, should_retry, expected_error):
     async with APISessionClient("https://httpbin.org") as session:
@@ -94,7 +96,7 @@ class MockStatus:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status_codes, max_retries, expected_response", [
     ([429, 429, 200, 200], 4, 200),
-    ([503, 429, 503, 200], 4, 200),
+    ([503, 429, 409, 200], 4, 200),
 ])
 async def test_retry_request_varying_responses(status_codes, max_retries, expected_response):
     async with APISessionClient("https://httpbin.org") as session:

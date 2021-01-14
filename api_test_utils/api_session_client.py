@@ -2,7 +2,7 @@ import os
 from types import TracebackType
 from typing import Optional, Type, Any
 from urllib.parse import urlparse
-import time
+import asyncio
 
 import aiohttp
 from aiohttp.typedefs import StrOrURL
@@ -54,11 +54,11 @@ class APISessionClient:
         return resp
 
     async def _retry_requests(self, make_request, max_retries):
-        retry_codes = {429, 503}
+        retry_codes = {429, 503, 409}
         for retry_number in range(max_retries):
             resp = await make_request()
             if resp.status in retry_codes:
-                time.sleep(2**retry_number - 1)
+                await asyncio.sleep(2**retry_number - 1)
                 continue
             return resp
         else:
