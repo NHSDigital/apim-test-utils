@@ -1,4 +1,5 @@
 import os
+import asyncio
 from types import TracebackType
 from typing import Optional, Type, Any
 from urllib.parse import urlparse
@@ -8,7 +9,7 @@ from aiohttp.typedefs import StrOrURL
 
 
 class APISessionClient:
-    """ wrapper to configuration of a base url for aiohttp session client """
+    """Wrapper to configuration of a base url for aiohttp session client"""
 
     def __init__(self, base_uri, **kwargs):
         self.base_uri = base_uri
@@ -18,7 +19,7 @@ class APISessionClient:
         return self
 
     def _full_url(self, url: StrOrURL) -> StrOrURL:
-        if not isinstance(url, str) :
+        if not isinstance(url, str):
             return url
 
         parsed = urlparse(url)
@@ -28,30 +29,60 @@ class APISessionClient:
         url = os.path.join(self.base_uri, url)
         return url
 
-    def get(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
+    def _request(
+        self,
+        method: str,
+        url: StrOrURL,
+        *args,
+        allow_retries: bool = False,
+        max_retries: int = 5,
+        allow_redirects: bool = True,
+        **kwargs: Any
+    ) -> "aiohttp._RequestContextManager":
         uri = self._full_url(url)
-        return self.session.get(uri, allow_redirects=allow_redirects, **kwargs)
+        if allow_retries:
+            resp = self._retry_requests(
+                lambda: self.session.request(
+                    method, uri, *args, allow_redirects=allow_redirects, **kwargs
+                ),
+                max_retries=max_retries
+            )
+        else:
+            resp = self.session.request(
+                method, uri, *args, allow_redirects=allow_redirects, **kwargs
+            )
+        return resp
 
-    def post(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        return self.session.post(uri, allow_redirects=allow_redirects, **kwargs)
+    async def _retry_requests(self, make_request, max_retries):
+        retry_codes = {429, 503, 409}
+        for retry_number in range(max_retries):
+            resp = await make_request()
+            if resp.status in retry_codes:
+                await asyncio.sleep(2**retry_number - 1)
+                continue
+            return resp
+        raise TimeoutError("Maximum retry limit hit.")
 
-    def put(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        return self.session.put(uri, allow_redirects=allow_redirects, **kwargs)
+    def get(self, *args, **kwargs):
+        return self._request('GET', *args, **kwargs)
 
-    def delete(self, url: StrOrURL, *, allow_redirects: bool = True, **kwargs: Any) -> "aoihttp._RequestContextManager":
-        uri = self._full_url(url)
-        return self.session.delete(uri, allow_redirects=allow_redirects, **kwargs)
+    def post(self, *args, **kwargs):
+        return self._request('POST', *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        return self._request('PUT', *args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return self._request('DELETE', *args, **kwargs)
 
     async def close(self):
         await self.session.close()
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_val: Optional[BaseException],
-            exc_tb: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
     ) -> None:
         await self.close()

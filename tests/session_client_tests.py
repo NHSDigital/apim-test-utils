@@ -46,3 +46,77 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
         assert body['headers'].get('Host') == 'httpbin.org'
         assert body['headers'].get('Content-Type') == 'application/json'
         assert body['data'] == json.dumps(data)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint, should_retry, expected", [
+    ("get", True, 200),
+    ("status/429", False, 429),
+    ("status/503", False, 503),
+    ("status/409", False, 409)
+])
+async def test_get_status_code_retries(endpoint, should_retry, expected):
+    async with APISessionClient("https://httpbin.org") as session:
+        async with await session.get(endpoint, allow_retries=should_retry) as resp:
+            assert resp.status == expected
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint, should_retry, expected_error", [
+    ("status/429", True, "Maximum retry limit hit."),
+    ("status/503", True, "Maximum retry limit hit."),
+    ("status/409", True, "Maximum retry limit hit.")
+])
+async def test_max_retries_limit(endpoint, should_retry, expected_error):
+    async with APISessionClient("https://httpbin.org") as session:
+        with pytest.raises(TimeoutError) as excinfo:
+            await session.get(endpoint, allow_retries=should_retry, max_retries=3)
+
+        error = excinfo.value
+        assert expected_error in str(error)
+
+
+class MockRequest:
+    """Class for returning multiple different function calls"""
+    def __init__(self, iterable):
+        self.iterator = iter(iterable)
+
+    async def __call__(self):
+        return next(self.iterator)
+
+
+class MockStatus:
+    """Mocks a Response status"""
+    def __init__(self, status):
+        self.status = status
+
+
+def mock_response(code):
+    return MockStatus(code)
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_codes, max_retries, expected_response", [
+    ([429, 429, 200, 200], 4, 200),
+    ([503, 429, 409, 200], 4, 200),
+])
+async def test_retry_request_varying_responses(status_codes, max_retries, expected_response):
+    async with APISessionClient("https://httpbin.org") as session:
+        mock_status_list = map(mock_response, status_codes)
+        requester = MockRequest(mock_status_list)
+        resp = await session._retry_requests(requester, max_retries) # pylint: disable=W0212
+        assert resp.status == expected_response
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_retry_request_varying_error():
+    async with APISessionClient("https://httpbin.org") as session:
+        mock_status_list = map(mock_response, [429, 429, 503])
+        requester = MockRequest(mock_status_list)
+        with pytest.raises(TimeoutError) as excinfo:
+            await session._retry_requests(requester, max_retries=3) # pylint: disable=W0212
+            error = excinfo.value
+            assert error == "Maximum retry limit hit."
