@@ -92,6 +92,10 @@ class MockStatus:
         self.status = status
 
 
+def mock_response(code):
+    return MockStatus(code)
+
+
 @pytest.mark.slow
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status_codes, max_retries, expected_response", [
@@ -100,9 +104,9 @@ class MockStatus:
 ])
 async def test_retry_request_varying_responses(status_codes, max_retries, expected_response):
     async with APISessionClient("https://httpbin.org") as session:
-        mock_status_list = map(lambda code: MockStatus(code), status_codes)
+        mock_status_list = map(mock_response, status_codes)
         requester = MockRequest(mock_status_list)
-        resp = await session._retry_requests(lambda: requester(), max_retries)
+        resp = await session._retry_requests(requester, max_retries)
         assert resp.status == expected_response
 
 
@@ -110,9 +114,9 @@ async def test_retry_request_varying_responses(status_codes, max_retries, expect
 @pytest.mark.asyncio
 async def test_retry_request_varying_error():
     async with APISessionClient("https://httpbin.org") as session:
-        mock_status_list = map(lambda code: MockStatus(code), [429, 429, 503])
+        mock_status_list = map(mock_response, [429, 429, 503])
         requester = MockRequest(mock_status_list)
         with pytest.raises(TimeoutError) as excinfo:
-            await session._retry_requests(lambda: requester(), max_retries=3)
+            await session._retry_requests(requester, max_retries=3)
             error = excinfo.value
             assert error == "Maxium retry limit hit."

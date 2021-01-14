@@ -61,8 +61,7 @@ class APISessionClient:
                 await asyncio.sleep(2**retry_number - 1)
                 continue
             return resp
-        else:
-            raise TimeoutError("Maxium retry limit hit.")
+        raise TimeoutError("Maxium retry limit hit.")
 
     def get(
         self,
