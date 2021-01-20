@@ -73,7 +73,7 @@ class ApigeeApiDeveloperApps:
                                                headers=headers)
                 return body
 
-    async def add_api_product(self, api_products: list) -> dict:
+    async def add_api_product(self, api_products: list, client_id: str) -> dict:
         """ Add a number of API Products to the app """
         params = self.default_params.copy()
         params['app_name'] = self.app_name
@@ -85,7 +85,7 @@ class ApigeeApiDeveloperApps:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.put(f"apps/{self.app_name}",
+            async with session.put(f"apps/{self.app_name}/keys/{client_id}",
                                    params=params,
                                    headers=self.headers,
                                    json=data) as resp:
@@ -98,7 +98,7 @@ class ApigeeApiDeveloperApps:
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
-                return body['credentials'][0]['apiProducts']
+                return body['apiProducts']
 
     async def set_custom_attributes(self, attributes: dict) -> dict:
         """ Replaces the current list of attributes with the attributes specified """
