@@ -45,7 +45,11 @@ async def test_apigee_delete_custom_attributes(_api):
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_api_product_to_app(_api):
-    resp = await _api.add_api_product(api_products=["internal-testing-internal-dev"])
+    credentials = await _api.get_app_keys()
+    resp = await _api.add_api_product(
+        api_products=["internal-testing-internal-dev"],
+        client_id=credentials['client_id']
+    )
     assert resp == [{'apiproduct': 'internal-testing-internal-dev', 'status': 'approved'}]
 
 
