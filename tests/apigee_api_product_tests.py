@@ -39,7 +39,7 @@ async def test_apigee_set_custom_attribute(_api):
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_api_proxy_to_product(_api):
     resp = await _api.update_product(
-        api_proxies=["identity-service-internal-dev"]
+        proxies=["identity-service-internal-dev"]
     )
     assert resp['proxies'] == ["identity-service-internal-dev"]
 

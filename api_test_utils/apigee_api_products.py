@@ -18,6 +18,22 @@ class ApigeeApiProducts(ApigeeApi):
         self.quota_interval = "1"
         self.quota_time_unit = "minute"
 
+    def _get_properties(self):
+        return {
+            "apiResources": [],
+            "approvalType": "auto",
+            "attributes": self.attributes,
+            "description": "",
+            "displayName": self.name,
+            "name": self.name,
+            "environments": self.environments,
+            "quota": self.quota,
+            "quotaInterval": self.quota_interval,
+            "quotaTimeUnit": self.quota_time_unit,
+            "scopes": self.scopes,
+            "proxies": self.proxies
+        }
+
     def _override_product_properties(self,
                                      quota: int = None,
                                      quota_interval: str = None,
@@ -25,12 +41,13 @@ class ApigeeApiProducts(ApigeeApi):
                                      attributes: dict = None,
                                      access: str = None,
                                      scopes: list = None,
+                                     proxies: list = None,
                                      environments: list = None) -> ():
         """ Override any provided product properties """
-
-        # override default product properties
         if scopes is not None:
             self.scopes = scopes
+        if proxies is not None:
+            self.proxies = proxies
         if environments is not None:
             self.environments = environments
         if access is not None:
@@ -54,29 +71,17 @@ class ApigeeApiProducts(ApigeeApi):
                                  attributes: dict = None,
                                  access: str = None,
                                  scopes: list = None,
+                                 proxies: list = None,
                                  environments: list = None) -> dict:
         """ Create a new developer product in apigee """
 
         self._override_product_properties(quota, quota_interval, quota_time_unit, attributes, access, scopes,
-                                          environments)
-        data = {
-            "apiResources": [],
-            "approvalType": "auto",
-            "attributes": self.attributes,  # make different access available
-            "description": "",
-            "displayName": self.name,
-            "name": self.name,
-            "environments": ["internal-dev"],
-            "quota": self.quota,
-            "quotaInterval": self.quota_interval,
-            "quotaTimeUnit": self.quota_time_unit,
-            "scopes": self.scopes
-        }
+                                          proxies, environments)
 
         async with APISessionClient(self.base_uri) as session:
             async with session.post("apiproducts",
                                     headers=self.headers,
-                                    json=data) as resp:
+                                    json=self._get_properties()) as resp:
 
                 if resp.status in {401, 502}:  # 401 is an expired token while 502 is an invalid token
                     raise Exception("Your token has expired or is invalid")
@@ -101,31 +106,17 @@ class ApigeeApiProducts(ApigeeApi):
                              access: str = None,
                              attributes: str = None,
                              scopes: list = None,
+                             proxies: list = None,
                              environments: list = None,
                              api_proxies: list = None) -> dict:
         """ Update product """
         self._override_product_properties(quota, quota_interval, quota_time_unit, attributes, access, scopes,
-                                          environments)
-
-        data = {
-            "apiResources": [],
-            "approvalType": "auto",
-            "attributes": self.attributes,  # make different access available
-            "description": "",
-            "displayName": self.name,
-            "name": self.name,
-            "environments": environments,
-            "quota": quota,
-            "quotaInterval": quota_interval,
-            "quotaTimeUnit": quota_time_unit,
-            "scopes": scopes,
-            "proxies": api_proxies
-        }
+                                          proxies, environments)
 
         async with APISessionClient(self.base_uri) as session:
             async with session.put(f"apiproducts/{self.name}",
                                    headers=self.headers,
-                                   json=data) as resp:
+                                   json=self._get_properties()) as resp:
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
