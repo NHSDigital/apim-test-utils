@@ -1,5 +1,5 @@
 import pytest
-from api_test_utils.apigee_api import ApigeeApiDeveloperApps
+from api_test_utils.apigee_api_apps import ApigeeApiDeveloperApps
 
 
 @pytest.yield_fixture(scope='function')
