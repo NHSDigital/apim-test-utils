@@ -16,11 +16,11 @@ async def _api():
     yield api
     # teardown
     print("Destroying Test Product..")
-    # await api.destroy_product()
+    await api.destroy_product()
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_custom_attributes(_api):
     resp = await _api.get_product_details()
     assert resp['attributes'] == [
@@ -29,14 +29,14 @@ async def test_apigee_get_custom_attributes(_api):
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_set_custom_attribute(_api):
     resp = await _api.update_product(attributes={"Test": "Passed"})
     assert resp['attributes'][1] == {'name': 'Test', 'value': 'Passed'}
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_api_proxy_to_product(_api):
     resp = await _api.update_product(
         api_proxies=["identity-service-internal-dev"]
@@ -45,7 +45,7 @@ async def test_apigee_add_api_proxy_to_product(_api):
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_add_scopes_to_product(_api):
     resp = await _api.update_product(
         scopes=["test_scope:USER-RESTRICTED"]
@@ -54,7 +54,7 @@ async def test_apigee_add_scopes_to_product(_api):
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_product_details(_api):
     product_details = await _api.get_product_details()
     assert list(product_details.keys()) == ['apiResources',
