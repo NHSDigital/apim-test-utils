@@ -204,12 +204,17 @@ class ApigeeApiDeveloperApps:
                                                headers=headers)
                 return body
 
-    async def get_app_keys(self) -> dict:
-        """ Returns the client id and client secret """
-        if not self.client_id or not self.client_secret:
-            raise Exception("\nthe application has not been created! client_id and secret not available\n"
+    def get_client_id(self):
+        if not self.client_id:
+            raise Exception("\nthe application has not been created! client_id\n"
                             "please invoke 'create_new_app()' method before requesting app credentials")
-        return {"client_id": self.client_id, "client_secret": self.client_secret}
+        return self.client_id
+
+    def get_client_secret(self):
+        if not self.client_secret:
+            raise Exception("\nthe application has not been created! client_secret\n"
+                            "please invoke 'create_new_app()' method before requesting app credentials")
+        return self.client_secret
 
     async def get_callback_url(self) -> str:
         """ Get the callback url """
