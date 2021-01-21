@@ -10,6 +10,8 @@ class ApigeeApiDeveloperApps:
         self.org_name = org_name
         self.developer_email = developer_email
         self.app_name = f"apim-auto-app-${uuid4().hex}"
+        self.client_id = None
+        self.client_secret = None
 
         self.base_uri = "https://api.enterprise.apigee.com/v1/organizations/" \
                         f"{self.org_name}/developers/{self.developer_email}"
@@ -71,9 +73,12 @@ class ApigeeApiDeveloperApps:
                                                status_code=resp.status,
                                                response=body,
                                                headers=headers)
+
+                self.client_id = body["credentials"][0]["consumerKey"]
+                self.client_secret = body["credentials"][0]["consumerSecret"]
                 return body
 
-    async def add_api_product(self, api_products: list, client_id: str) -> dict:
+    async def add_api_product(self, api_products: list) -> dict:
         """ Add a number of API Products to the app """
         params = self.default_params.copy()
         params['app_name'] = self.app_name
@@ -85,7 +90,7 @@ class ApigeeApiDeveloperApps:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.put(f"apps/{self.app_name}/keys/{client_id}",
+            async with session.put(f"apps/{self.app_name}/keys/{self.client_id}",
                                    params=params,
                                    headers=self.headers,
                                    json=data) as resp:
@@ -199,13 +204,17 @@ class ApigeeApiDeveloperApps:
                                                headers=headers)
                 return body
 
-    async def get_app_keys(self) -> dict:
-        """ Returns the client id and client secret """
-        resp = await self.get_app_details()
-        credentials = resp['credentials'][0]
-        client_id = credentials['consumerKey']
-        secret_key = credentials['consumerSecret']
-        return {'client_id': client_id, 'client_secret': secret_key}
+    def get_client_id(self):
+        if not self.client_id:
+            raise Exception("\nthe application has not been created! client_id\n"
+                            "please invoke 'create_new_app()' method before requesting app credentials")
+        return self.client_id
+
+    def get_client_secret(self):
+        if not self.client_secret:
+            raise Exception("\nthe application has not been created! client_secret\n"
+                            "please invoke 'create_new_app()' method before requesting app credentials")
+        return self.client_secret
 
     async def get_callback_url(self) -> str:
         """ Get the callback url """
