@@ -2,7 +2,7 @@ from os import environ
 from uuid import uuid4
 
 
-class ApigeeApi(object):
+class ApigeeApi:
     """ A simple class to help facilitate CRUD operations in Apigee """
 
     def __init__(self, org_name: str = "nhsd-nonprod"):

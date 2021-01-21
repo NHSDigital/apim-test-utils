@@ -30,31 +30,6 @@ async def test_apigee_get_custom_attributes(_api):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_apigee_set_custom_attribute(_api):
-    resp = await _api.update_product(attributes={"Test": "Passed"})
-    assert resp['attributes'][1] == {'name': 'Test', 'value': 'Passed'}
-
-
-@pytest.mark.asyncio
-@pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_apigee_add_api_proxy_to_product(_api):
-    resp = await _api.update_product(
-        proxies=["identity-service-internal-dev"]
-    )
-    assert resp['proxies'] == ["identity-service-internal-dev"]
-
-
-@pytest.mark.asyncio
-@pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_apigee_add_scopes_to_product(_api):
-    resp = await _api.update_product(
-        scopes=["test_scope:USER-RESTRICTED"]
-    )
-    assert resp['scopes'] == ["test_scope:USER-RESTRICTED"]
-
-
-@pytest.mark.asyncio
-@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_product_details(_api):
     product_details = await _api.get_product_details()
     assert list(product_details.keys()) == ['apiResources',
@@ -73,3 +48,50 @@ async def test_apigee_get_product_details(_api):
                                             'quotaInterval',
                                             'quotaTimeUnit',
                                             'scopes']
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_update_product_attributes(_api):
+    resp = await _api.update_attributes(attributes={"Test": "Passed"})
+    assert resp['attributes'][1] == {'name': 'Test', 'value': 'Passed'}
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_update_product_proxies(_api):
+    resp = await _api.update_proxies(
+        proxies=["identity-service-internal-dev"]
+    )
+    assert resp['proxies'] == ["identity-service-internal-dev"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_update_product_scopes(_api):
+    resp = await _api.update_scopes(
+        scopes=["test_scope:USER-RESTRICTED"]
+    )
+    assert resp['scopes'] == ["test_scope:USER-RESTRICTED"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_update_quota_values(_api):
+    resp = await _api.update_ratelimits(
+        quota=600,
+        quota_interval="1",
+        quota_time_unit="minute"
+    )
+    assert resp['quota'] == '600'
+    assert resp['quotaInterval'] == '1'
+    assert resp['quotaTimeUnit'] == 'minute'
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_product_environments_updates(_api):
+    resp = await _api.update_environments(
+        environments=["internal-dev", "internal-qa"]
+    )
+    assert resp['environments'] == ["internal-dev", "internal-qa"]
