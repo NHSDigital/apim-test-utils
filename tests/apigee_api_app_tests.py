@@ -1,5 +1,5 @@
 import pytest
-from api_test_utils.apigee_api import ApigeeApiDeveloperApps
+from api_test_utils.apigee_api_apps import ApigeeApiDeveloperApps
 
 
 @pytest.yield_fixture(scope='function')
@@ -24,7 +24,7 @@ async def _api():
 async def test_apigee_get_custom_attributes(_api):
     resp = await _api.get_custom_attributes()
     assert resp['attribute'] == [
-        {'name': 'DisplayName', 'value': _api.app_name},
+        {'name': 'DisplayName', 'value': _api.name},
     ]
 
 
@@ -39,7 +39,7 @@ async def test_apigee_add_custom_attribute(_api):
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_delete_custom_attributes(_api):
     resp = await _api.delete_custom_attribute(attribute_name='DisplayName')
-    assert resp == {'name': 'DisplayName', 'value': _api.app_name}
+    assert resp == {'name': 'DisplayName', 'value': _api.name}
 
 
 @pytest.mark.asyncio
