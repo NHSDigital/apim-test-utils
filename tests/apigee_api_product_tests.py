@@ -76,16 +76,20 @@ async def test_apigee_update_product_scopes(_api):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason='waiting for move to azure devops')
+# @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_update_quota_values(_api):
     resp = await _api.update_ratelimits(
         quota=600,
         quota_interval="1",
-        quota_time_unit="minute"
+        quota_time_unit="minute",
+        ratelimit="15ps"
     )
+    print(resp)
     assert resp['quota'] == '600'
     assert resp['quotaInterval'] == '1'
     assert resp['quotaTimeUnit'] == 'minute'
+    assert resp['attributes'][1]["value"] == "15ps"
+
 
 
 @pytest.mark.asyncio

@@ -12,8 +12,12 @@ class ApigeeApiProducts(ApigeeApi):
         self.scopes = []
         self.environments = ["internal-dev"]
         self.access = "public"
+        self.ratelimit = "10ps"
         self.proxies = []
-        self.attributes = [{"name": "access", "value": self.access}]
+        self.attributes = [
+            {"name": "access", "value": self.access},
+            {"name": "ratelimit", "value": self.ratelimit}
+        ]
         self.quota = 500
         self.quota_interval = "1"
         self.quota_time_unit = "minute"
@@ -34,16 +38,21 @@ class ApigeeApiProducts(ApigeeApi):
             "proxies": self.proxies
         }
 
-    def update_ratelimits(self, quota: int, quota_interval: str, quota_time_unit: str):
+    def update_ratelimits(self, quota: int, quota_interval: str, quota_time_unit: str, ratelimit: str):
         """ Update the product set quota values """
         self.quota = quota
         self.quota_interval = quota_interval
         self.quota_time_unit = quota_time_unit
+        self.ratelimit = ratelimit
+        self.attributes[1]["value"] = ratelimit
         return self._update_product()
 
     def update_attributes(self, attributes: dict):
         """ Update the product attributes """
-        updated_attributes = [{"name": "access", "value": self.access}]
+        updated_attributes = [
+            {"name": "access", "value": self.access},
+            {"name": "ratelimit", "value": self.ratelimit}
+        ]
         for key, value in attributes.items():
             updated_attributes.append({"name": key, "value": value})
         self.attributes = updated_attributes
