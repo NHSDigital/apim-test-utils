@@ -104,4 +104,3 @@ async def test_apigee_product_environments_updates(_api):
 async def test_apigee_invalid_product_environments_updates(_api):
     with pytest.raises(Exception):
         await _api.update_environments(["invalid"])
-
