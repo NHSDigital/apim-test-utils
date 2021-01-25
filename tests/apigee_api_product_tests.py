@@ -25,6 +25,7 @@ async def test_apigee_get_custom_attributes(_api):
     resp = await _api.get_product_details()
     assert resp['attributes'] == [
         {'name': 'access', 'value': _api.access},
+        {"name": "ratelimit", "value": _api.rate_limit}
     ]
 
 
@@ -54,7 +55,7 @@ async def test_apigee_get_product_details(_api):
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_update_product_attributes(_api):
     resp = await _api.update_attributes(attributes={"Test": "Passed"})
-    assert resp['attributes'][1] == {'name': 'Test', 'value': 'Passed'}
+    assert resp['attributes'][2] == {'name': 'Test', 'value': 'Passed'}
 
 
 @pytest.mark.asyncio
