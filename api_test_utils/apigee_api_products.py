@@ -12,11 +12,11 @@ class ApigeeApiProducts(ApigeeApi):
         self.scopes = []
         self.environments = ["internal-dev"]
         self.access = "public"
-        self.ratelimit = "10ps"
+        self.rate_limit = "10ps"
         self.proxies = []
         self.attributes = [
             {"name": "access", "value": self.access},
-            {"name": "ratelimit", "value": self.ratelimit}
+            {"name": "ratelimit", "value": self.rate_limit}
         ]
         self.quota = 500
         self.quota_interval = "1"
@@ -38,20 +38,20 @@ class ApigeeApiProducts(ApigeeApi):
             "proxies": self.proxies
         }
 
-    def update_ratelimits(self, quota: int, quota_interval: str, quota_time_unit: str, ratelimit: str):
+    def update_ratelimits(self, quota: int, quota_interval: str, quota_time_unit: str, rate_limit: str):
         """ Update the product set quota values """
         self.quota = quota
         self.quota_interval = quota_interval
         self.quota_time_unit = quota_time_unit
-        self.ratelimit = ratelimit
-        self.attributes[1]["value"] = ratelimit
+        self.rate_limit = rate_limit
+        self.attributes[1]["value"] = rate_limit
         return self._update_product()
 
     def update_attributes(self, attributes: dict):
         """ Update the product attributes """
         updated_attributes = [
             {"name": "access", "value": self.access},
-            {"name": "ratelimit", "value": self.ratelimit}
+            {"name": "ratelimit", "value": self.rate_limit}
         ]
         for key, value in attributes.items():
             updated_attributes.append({"name": key, "value": value})
@@ -60,6 +60,10 @@ class ApigeeApiProducts(ApigeeApi):
 
     def update_environments(self, environments: list):
         """ Update the product environments """
+        permitted_environments = ["internal-dev", "internal-dev-sandbox", "internal-qa", "internal-qa-sandbox", "ref"]
+        if not set(environments) <= set(permitted_environments):
+            raise Exception(f"Failed updating environments! specified environments not permitted: {environments}"
+                            f"\n Please specify valid environments: {permitted_environments}")
         self.environments = environments
         return self._update_product()
 
