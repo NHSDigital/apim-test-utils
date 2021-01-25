@@ -76,7 +76,7 @@ async def test_apigee_update_product_scopes(_api):
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_update_quota_values(_api):
     resp = await _api.update_ratelimits(
         quota=600,
@@ -100,7 +100,7 @@ async def test_apigee_product_environments_updates(_api):
 
 
 @pytest.mark.asyncio
-# @pytest.mark.skip(reason='waiting for move to azure devops')
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_invalid_product_environments_updates(_api):
     with pytest.raises(Exception):
         await _api.update_environments(["invalid"])
