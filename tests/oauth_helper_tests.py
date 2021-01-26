@@ -1,12 +1,12 @@
+from random import getrandbits
 import pytest
 from api_test_utils.oauth_helper import OauthHelper
 from api_test_utils.apigee_api_apps import ApigeeApiDeveloperApps
-from random import getrandbits
 
 
 @pytest.yield_fixture(scope='function')
 @pytest.mark.asyncio
-async def test_app():
+async def _test_app():
     """ Setup and Teardown, create an app at the start and then destroy it at the end """
 
     test_app = ApigeeApiDeveloperApps()
@@ -22,18 +22,18 @@ async def test_app():
 
 
 @pytest.yield_fixture(scope='function')
-def oauth(test_app):
+def _oauth(_test_app):
     """Return an instance of OauthHelper to the test"""
-    return OauthHelper(client_id=test_app.client_id, client_secret=test_app.client_secret,
-                       redirect_uri=test_app.callback_url)
+    return OauthHelper(client_id=_test_app.client_id, client_secret=_test_app.client_secret,
+                       redirect_uri=_test_app.callback_url)
 
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_endpoint(oauth):
-    resp = await oauth.hit_oauth_endpoint(method="GET", endpoint="authorize", params={
-        "client_id": oauth.client_id,
-        "redirect_uri": oauth.redirect_uri,
+async def test_oauth_endpoint(_oauth):
+    resp = await _oauth.hit_oauth_endpoint(method="GET", endpoint="authorize", params={
+        "client_id": _oauth.client_id,
+        "redirect_uri": _oauth.redirect_uri,
         "response_type": "code",
         "state": getrandbits(32)
     })
@@ -42,8 +42,8 @@ async def test_oauth_endpoint(oauth):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_authorization_code(oauth):
-    resp = await oauth.get_token_response(grant_type='authorization_code')
+async def test_oauth_authorization_code(_oauth):
+    resp = await _oauth.get_token_response(grant_type='authorization_code')
     assert resp['status_code'] == 200
 
 
@@ -69,13 +69,13 @@ async def test_oauth_client_credentials(test_app):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_custom_token_request(oauth):
-    resp = await oauth.get_token_response(grant_type='authorization_code', request_data={
-        'client_id': oauth.client_id,
-        'client_secret': oauth.client_secret,
+async def test_oauth_custom_token_request(_oauth):
+    resp = await _oauth.get_token_response(grant_type='authorization_code', request_data={
+        'client_id': _oauth.client_id,
+        'client_secret': _oauth.client_secret,
         'grant_type': "authorization_code",
         'redirect_uri': "INVALID",
-        'code': await oauth.get_authenticated_with_simulated_auth()
+        'code': await _oauth.get_authenticated_with_simulated_auth()
     })
     assert resp['status_code'] == 400
     assert resp['body'] == {'error': 'invalid_request', 'error_description': 'redirect_uri is invalid'}

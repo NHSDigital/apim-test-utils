@@ -1,10 +1,10 @@
-import jwt  # pyjwt
 from os import environ
 from uuid import uuid4
 from time import time
-from . import throw_friendly_error
-from api_test_utils.api_session_client import APISessionClient
+import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
+from api_test_utils.api_session_client import APISessionClient
+from . import throw_friendly_error
 
 
 class OauthHelper:
@@ -63,11 +63,11 @@ class OauthHelper:
         return form_data
 
     @staticmethod
-    async def _get_default_client_credentials_request_data(jwt: bytes) -> dict:
+    async def _get_default_client_credentials_request_data(_jwt: bytes) -> dict:
         """Get the default data required for a client credentials request"""
         return {
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            "client_assertion": jwt,
+            "client_assertion": _jwt,
             "grant_type": "client_credentials",
         }
 
