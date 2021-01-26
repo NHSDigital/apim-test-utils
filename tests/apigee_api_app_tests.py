@@ -66,6 +66,7 @@ async def test_apigee_get_call_back_url(_api):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_app_details(_api):
     resp = await _api.get_app_details()
     assert resp['status'] == "approved"
