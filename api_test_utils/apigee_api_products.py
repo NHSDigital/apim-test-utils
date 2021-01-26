@@ -1,5 +1,6 @@
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
+from . import throw_friendly_error
 
 
 class ApigeeApiProducts(ApigeeApi):
@@ -80,11 +81,11 @@ class ApigeeApiProducts(ApigeeApi):
                     print(f'The product "{self.name}" already exists!')
                 elif resp.status != 201:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to create product: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to create product: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     async def _update_product(self) -> dict:
@@ -96,11 +97,11 @@ class ApigeeApiProducts(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to update product: {self._product}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to update product: {self._product}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
 
                 return body
 
@@ -111,11 +112,11 @@ class ApigeeApiProducts(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to get product details for: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to get product details for: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     async def destroy_product(self) -> dict:
@@ -125,10 +126,10 @@ class ApigeeApiProducts(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to delete product: {self.name},"
-                                                       f" PLEASE DELETE MANUALLY",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to delete product: {self.name},"
+                                                 f" PLEASE DELETE MANUALLY",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body

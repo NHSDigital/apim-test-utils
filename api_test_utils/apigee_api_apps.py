@@ -1,5 +1,6 @@
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
+from . import throw_friendly_error
 
 
 class ApigeeApiDeveloperApps(ApigeeApi):
@@ -11,6 +12,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
 
         self.client_id = None
         self.client_secret = None
+        self.callback_url = None
 
         self.app_base_uri = f"{self.base_uri}/developers/{self.developer_email}"
 
@@ -21,10 +23,11 @@ class ApigeeApiDeveloperApps(ApigeeApi):
 
     async def create_new_app(self, callback_url: str = "http://example.com") -> dict:
         """ Create a new developer app in apigee """
+        self.callback_url = callback_url
 
         data = {
             "attributes": [{"name": "DisplayName", "value": self.name}],
-            "callbackUrl": callback_url,
+            "callbackUrl": self.callback_url,
             "name": self.name,
             "status": "approved"
         }
@@ -44,11 +47,11 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                     print(f'The app "{self.name}" already exists!')
                 elif resp.status != 201:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to create app: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to create app: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
 
                 self.client_id = body["credentials"][0]["consumerKey"]
                 self.client_secret = body["credentials"][0]["consumerSecret"]
@@ -73,12 +76,12 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to add api products {api_products} to app: "
-                                                       f"{self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to add api products {api_products} to app: "
+                                                 f"{self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body['apiProducts']
 
     async def set_custom_attributes(self, attributes: dict) -> dict:
@@ -99,12 +102,12 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to add custom attributes {attributes} to app: "
-                                                       f"{self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to add custom attributes {attributes} to app: "
+                                                 f"{self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body['attribute']
 
     async def update_custom_attribute(self, attribute_name: str, attribute_value: str) -> dict:
@@ -125,11 +128,11 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to add custom attribute for app: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to add custom attribute for app: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     async def delete_custom_attribute(self, attribute_name: str) -> dict:
@@ -145,11 +148,11 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to delete custom attribute for app: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to delete custom attribute for app: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     async def get_custom_attributes(self) -> dict:
@@ -159,11 +162,11 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to get custom attribute for app: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to get custom attribute for app: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     async def get_app_details(self) -> dict:
@@ -173,29 +176,33 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to get app details for: {self.name}",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to get app details for: {self.name}",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
 
     def get_client_id(self):
+        """ Get the client id """
         if not self.client_id:
-            raise Exception("\nthe application has not been created! client_id\n"
-                            "please invoke 'create_new_app()' method before requesting app credentials")
+            raise Exception("\nthe application has not been created! \n"
+                            "please invoke 'create_new_app()' method before requesting the client_id")
         return self.client_id
 
     def get_client_secret(self):
+        """ Get the client secret """
         if not self.client_secret:
-            raise Exception("\nthe application has not been created! client_secret\n"
-                            "please invoke 'create_new_app()' method before requesting app credentials")
+            raise Exception("\nthe application has not been created! \n"
+                            "please invoke 'create_new_app()' method before requesting the client secret")
         return self.client_secret
 
     async def get_callback_url(self) -> str:
         """ Get the callback url """
-        resp = await self.get_app_details()
-        return resp['callbackUrl']
+        if not self.callback_url:
+            raise Exception("\nthe application has not been created! \n"
+                            "please invoke 'create_new_app()' method before requesting the callback url")
+        return self.callback_url
 
     async def destroy_app(self) -> dict:
         """ Delete the app """
@@ -204,9 +211,9 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                 body = await resp.json()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    self._throw_friendly_error(message=f"unable to delete app: {self.name}, PLEASE DELETE MANUALLY",
-                                               url=resp.url,
-                                               status_code=resp.status,
-                                               response=body,
-                                               headers=headers)
+                    throw_friendly_error(message=f"unable to delete app: {self.name}, PLEASE DELETE MANUALLY",
+                                         url=resp.url,
+                                         status_code=resp.status,
+                                         response=body,
+                                         headers=headers)
                 return body
