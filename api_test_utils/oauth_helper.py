@@ -46,7 +46,7 @@ class OauthHelper:
         authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri)
         return await authenticator.authenticate()
 
-    async def _get_authorization_code_form_data(self, timeout: int = 5000, refresh_token: str = "") -> dict:
+    async def _get_default_authorization_code_request_data(self, timeout: int = 5000, refresh_token: str = "") -> dict:
         """Get the default data required for a authorization code request"""
         form_data = {
             'client_id': self.client_id,
@@ -63,7 +63,7 @@ class OauthHelper:
         return form_data
 
     @staticmethod
-    async def _get_client_credentials_form_data(jwt: bytes) -> dict:
+    async def _get_default_client_credentials_request_data(jwt: bytes) -> dict:
         """Get the default data required for a client credentials request"""
         return {
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
@@ -87,16 +87,16 @@ class OauthHelper:
                         'headers': dict(resp.headers.items()), 'history': resp.history}
 
     async def get_token_response(self, grant_type: str = 'authorization_code',
-                                 form_data: dict = None, **kwargs) -> dict:
-        if not form_data:
+                                 request_data: dict = None, **kwargs) -> dict:
+        if not request_data:
             # Get defaults
             func = {
-                'authorization_code': self._get_authorization_code_form_data,
-                'client_credentials': self._get_client_credentials_form_data,
+                'authorization_code': self._get_default_authorization_code_request_data,
+                'client_credentials': self._get_default_client_credentials_request_data,
             }.get(grant_type)
 
-            form_data = await func(**kwargs)
-        return await self.hit_oauth_endpoint("post", "token", data=form_data)
+            request_data = await func(**kwargs)
+        return await self.hit_oauth_endpoint("post", "token", data=request_data)
 
     def create_jwt(self, kid: str, signing_key: str = None, claims: dict = None, algorithm: str = "RS512") -> bytes:
         """Create a Json Web Token"""
