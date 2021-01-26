@@ -10,12 +10,12 @@ async def _api():
     # create apigee instance & attach instance to class
     api = ApigeeApiDeveloperApps()
 
-    print("Creating Test App..")
+    print("\nCreating Test App..")
     await api.create_new_app()
 
     yield api
     # teardown
-    print("Destroying Test App..")
+    print("\nDestroying Test App..")
     await api.destroy_app()
 
 
@@ -63,3 +63,9 @@ async def test_apigee_get_app_keys(_api):
 async def test_apigee_get_call_back_url(_api):
     callback_url = await _api.get_callback_url()
     assert callback_url == "http://example.com"
+
+
+@pytest.mark.asyncio
+async def test_apigee_get_app_details(_api):
+    resp = await _api.get_app_details()
+    assert resp['status'] == "approved"
