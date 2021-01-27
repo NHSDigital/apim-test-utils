@@ -49,9 +49,9 @@ async def test_oauth_authorization_code(_oauth):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_client_credentials(test_app):
+async def test_oauth_client_credentials(_test_app):
     # Set JWT Testing resource url
-    await test_app.set_custom_attributes(
+    await _test_app.set_custom_attributes(
         {
             'jwks-resource-url': 'https://raw.githubusercontent.com/NHSDigital/'
                                  'identity-service-jwks/main/jwks/internal-dev/'
@@ -59,11 +59,11 @@ async def test_oauth_client_credentials(test_app):
         }
     )
 
-    oauth = OauthHelper(client_id=test_app.client_id, client_secret=test_app.client_secret,
-                        redirect_uri=test_app.callback_url)
+    oauth = OauthHelper(client_id=_test_app.client_id, client_secret=_test_app.client_secret,
+                        redirect_uri=_test_app.callback_url)
 
     jwt = oauth.create_jwt(kid="test-1")
-    resp = await oauth.get_token_response(grant_type='client_credentials', jwt=jwt)
+    resp = await oauth.get_token_response(grant_type='client_credentials', _jwt=jwt)
     assert resp['status_code'] == 200
 
 
