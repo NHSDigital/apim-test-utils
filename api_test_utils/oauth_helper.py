@@ -32,6 +32,7 @@ class OauthHelper:
 
     @staticmethod
     def _get_private_key():
+        """Return the contents of a private key"""
         _path = environ.get("JWT_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
         if _path == 'not-set':
             raise Exception("\nJWT_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
@@ -114,8 +115,8 @@ class OauthHelper:
                 "exp": int(time()) + 5,
             }
 
-        additional_headers = ({}, {"kid": kid})[kid is not None]
-        return jwt.encode(claims, signing_key, algorithm=algorithm, headers=additional_headers)
+        headers = ({}, {"kid": kid})[kid is not None]
+        return jwt.encode(claims, signing_key, algorithm=algorithm, headers=headers)
 
 
 class _SimulatedAuthFlow:
@@ -125,6 +126,7 @@ class _SimulatedAuthFlow:
         self.redirect_uri = redirect_uri
 
     async def _get_state(self, request_state: str) -> str:
+        """Send an authorize request and retrieve the state"""
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
@@ -150,6 +152,7 @@ class _SimulatedAuthFlow:
                 return state
 
     async def authenticate(self, request_state: str = str(uuid4())) -> str:
+        """Authenticate and retrieve the code value"""
         state = await self._get_state(request_state)
         params = {
             "response_type": "code",
@@ -179,8 +182,14 @@ class _SimulatedAuthFlow:
                     headers = dict(callback_resp.headers.items())
                     # Confirm request was successful
                     if callback_resp.status != 302:
-                        raise Exception("unexpected response, unable to authenticate with simulated oauth")
+                        body = await resp.read()
+                        throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
+                                             url=resp.url,
+                                             status_code=resp.status,
+                                             response=body,
+                                             headers=headers)
 
-                    url = headers['Location'].split("?")[1]
-                    params = {x[0]: x[1] for x in [x.split("=") for x in url.split("&")]}
+                    # Get code value from location parameters
+                    query = headers['Location'].split("?")[1]
+                    params = {x[0]: x[1] for x in [x.split("=") for x in query.split("&")]}
                     return params['code']
