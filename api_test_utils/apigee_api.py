@@ -3,7 +3,7 @@ from uuid import uuid4
 
 
 class ApigeeApi:
-    """ A simple class to help facilitate CRUD operations in Apigee """
+    """ A parent class to hold reusable methods and shared properties for the different ApigeeApi* classes"""
 
     def __init__(self, org_name: str = "nhsd-nonprod"):
         self.org_name = org_name
@@ -20,13 +20,3 @@ class ApigeeApi:
                             r'https://docs.apigee.com/api-platform/system-administration/using-gettoken'
                             '\n')
         return _token
-
-    @staticmethod
-    def _throw_friendly_error(message: str, url: str, status_code: int, response: str, headers: dict) -> Exception:
-        raise Exception(f"\n{'*' * len(message)}\n"
-                        f"MESSAGE: {message}\n"
-                        f"URL: {url}\n"
-                        f"STATUS CODE: {status_code}\n"
-                        f"RESPONSE: {response}\n"
-                        f"HEADERS: {headers}\n"
-                        f"{'*' * len(message)}\n")

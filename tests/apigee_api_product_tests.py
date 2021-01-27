@@ -10,12 +10,12 @@ async def _api():
     # create apigee instance & attach instance to class
     api = ApigeeApiProducts()
 
-    print("Creating Test Product..")
+    print("\nCreating Test Product..")
     await api.create_new_product()
 
     yield api
     # teardown
-    print("Destroying Test Product..")
+    print("\nDestroying Test Product..")
     await api.destroy_product()
 
 

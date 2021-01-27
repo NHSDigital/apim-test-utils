@@ -107,3 +107,13 @@ async def poll_until(
         return await asyncio.wait_for(_poll_until(), timeout=timeout)
     except asyncio.TimeoutError as e:
         raise PollTimeoutError(responses) from e
+
+
+def throw_friendly_error(message: str, url: str, status_code: int, response: str, headers: dict) -> Exception:
+    raise Exception(f"\n{'*' * len(message)}\n"
+                    f"MESSAGE: {message}\n"
+                    f"URL: {url}\n"
+                    f"STATUS CODE: {status_code}\n"
+                    f"RESPONSE: {response}\n"
+                    f"HEADERS: {headers}\n"
+                    f"{'*' * len(message)}\n")
