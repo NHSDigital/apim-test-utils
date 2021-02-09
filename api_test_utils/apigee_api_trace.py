@@ -1,13 +1,12 @@
-from uuid import uuid4
-from . import get_token, throw_friendly_error
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
+from . import throw_friendly_error
 
 
 class ApigeeApiTraceDebug(ApigeeApi):
     """ Create and collect Apigee Trace information for debugging purposes """
 
-    def __init__(self, proxy: str, environment: str = "internal-dev", timeout: int = 10,
+    def __init__(self, proxy: str, environment: str = "internal-dev", timeout: int = 30,
                  org_name: str = "nhsd-nonprod"):
         super().__init__(org_name)
 
@@ -15,55 +14,59 @@ class ApigeeApiTraceDebug(ApigeeApi):
         self.env = environment
         self.default_params = {
             "session": self.name,
-            "timeout": timeout,
+            "timeout": str(timeout),
         }
+        self.revision = None
+        self.transaction_id = None
 
-    @property
-    def proxy(self):
-        return self.proxy
-
-    @proxy.setter
-    def proxy(self, new_proxy):
-        self.proxy = new_proxy
-
-    async def _get_latest_revision(self, proxy: str = self.proxy) -> str:
+    async def _set_latest_revision(self):
         async with APISessionClient(self.base_uri) as session:
-            async with session.get(f"apis/{proxy}/revisions", headers=self.headers) as resp:
-                body = await resp.json()
+            async with session.get(f"apis/{self.proxy}/revisions", headers=self.headers) as resp:
+                body = await resp.read()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
-                    throw_friendly_error(message=f"unable to get revision for: {proxy} on {self.env}",
+                    throw_friendly_error(message=f"unable to get revision for: {self.proxy} on {self.env}",
                                          url=resp.url,
                                          status_code=resp.status,
                                          response=body,
                                          headers=headers)
-                return body
 
-    async def start_trace(self, proxy: str = self.proxy):
-        revision = await self._get_latest_revision(proxy)
+                # Get and validate revision number
+                revision = eval(body)[-1]
+                assert revision.isnumeric(), f"Revision must be a number: {revision}"
 
+                self.revision = revision
+
+    def _has_timed_out(self, resp):
+        if resp.get("message", "") == f"DebugSession {self.name} not found":
+            raise TimeoutError("Your session has timed out, please rerun the start_trace() method again")
+
+    async def start_trace(self) -> dict:
+        await self._set_latest_revision()
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"/environments/{self.env}/apis/{proxy}/revisions/{revision}/debugsessions",
-                                    params=self.default_params,
-                                    headers=self.headers) as resp:
+            async with session.post(
+                    f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/debugsessions",
+                    params=self.default_params,
+                    headers=self.headers) as resp:
                 body = await resp.json()
                 if resp.status != 201:
                     headers = dict(resp.headers.items())
-                    throw_friendly_error(message=f"unable to start trace on proxy: {proxy}",
+                    throw_friendly_error(message=f"unable to start trace on proxy: {self.proxy}",
                                          url=resp.url,
                                          status_code=resp.status,
                                          response=body,
                                          headers=headers)
-                return body
+                return {'status_code': resp.status, 'body': body}
 
-    async def _get_transaction_id(self) -> str:
+    async def _set_transaction_id(self):
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"/environments/{self.env}/apis/{self.proxy}/revisions/{revision}/"
-                                    f"debugsessions/{self.name}/data",
-                                    params=self.default_params,
-                                    headers=self.headers) as resp:
+            async with session.get(f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/"
+                                   f"debugsessions/{self.name}/data",
+                                   headers=self.headers) as resp:
+
                 body = await resp.json()
-                if resp.status != 201:
+                if resp.status != 200:
+                    self._has_timed_out(body)
                     headers = dict(resp.headers.items())
                     throw_friendly_error(message=f"unable to get transaction_id for session: {self.name}",
                                          url=resp.url,
@@ -71,46 +74,54 @@ class ApigeeApiTraceDebug(ApigeeApi):
                                          response=body,
                                          headers=headers)
 
-                return body.strip('[]').replace("\"", "").strip().split(', ')[0]
+                self.transaction_id = body[0].strip() if body else None
 
-    async def get_raw_trace_data(self) -> dict:
-        transaction_id = await self._get_transaction_id()
+    async def get_trace_data(self) -> dict or None:
+        if not self.revision:
+            raise RuntimeError("You must run start_trace() before you can run get_raw_trace()")
+
+        await self._set_transaction_id()
+        if not self.transaction_id:
+            return None
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"/environments/{self.env}/apis/{self.proxy}/revisions/{revision}/"
-                                    f"debugsessions/{self.name}/data/{transaction_id}",
-                                    params=self.default_params,
+            async with session.post(f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/"
+                                    f"debugsessions/{self.name}/data/{self.transaction_id}",
                                     headers=self.headers) as resp:
-                body = await resp.json()
+                body = await resp.read()
                 if resp.status != 201:
                     headers = dict(resp.headers.items())
-                    throw_friendly_error(message=f"unable to get trace data for session {self.name} on proxy {proxy}",
+                    throw_friendly_error(message=f"unable to get trace data for session {self.name} "
+                                                 f"on proxy {self.proxy}",
                                          url=resp.url,
                                          status_code=resp.status,
                                          response=body,
                                          headers=headers)
                 return body
 
-    async def stop_trace(self):
-        transaction_id = await self._get_transaction_id()
+    async def stop_trace(self) -> dict:
+        if not self.revision:
+            raise RuntimeError("You must run start_trace() before you can run stop_trace()")
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.delete(f"/environments/{self.env}/apis/{self.proxy}/revisions/{revision}/"
-                                      f"debugsessions/{self.name}/data/{transaction_id}",
-                                      params=self.default_params,
+            async with session.delete(f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/"
+                                      f"debugsessions/{self.name}",
                                       headers=self.headers) as resp:
                 body = await resp.json()
-                if resp.status != 201:
+                if resp.status != 200:
                     headers = dict(resp.headers.items())
                     throw_friendly_error(message=f"failed to stop trace: {self.name}",
                                          url=resp.url,
                                          status_code=resp.status,
                                          response=body,
                                          headers=headers)
-                return body
+
+                # Reset revision
+                self.revision = None
+                return {'status_code': resp.status, 'body': body}
 
     def get_asid_from_trace(self) -> dict:
-        data = self.get_raw_trace_data()
+        data = self.get_trace_data()
         executions = [x.get('results', None) for x in data['point'] if x.get('id', "") == "Execution"]
         executions = list(filter(lambda x: x != [], executions))
 
