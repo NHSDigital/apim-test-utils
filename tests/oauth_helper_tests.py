@@ -70,7 +70,7 @@ async def test_oauth_client_credentials(_test_app):
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_oauth_custom_token_request(_oauth):
-    resp = await _oauth.get_token_response(grant_type='authorization_code', request_data={
+    resp = await _oauth.get_token_response(grant_type='authorization_code', data={
         'client_id': _oauth.client_id,
         'client_secret': _oauth.client_secret,
         'grant_type': "authorization_code",

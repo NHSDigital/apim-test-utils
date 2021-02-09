@@ -82,22 +82,21 @@ class OauthHelper:
                     _ = body.pop('message_id', None)  # Remove the unique message id if the response is na error
                 except ContentTypeError:
                     # Might be html or text response
-                    body = resp.read()
+                    body = await resp.read()
 
                 return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
                         'headers': dict(resp.headers.items()), 'history': resp.history}
 
-    async def get_token_response(self, grant_type: str = 'authorization_code',
-                                 request_data: dict = None, **kwargs) -> dict:
-        if not request_data:
+    async def get_token_response(self, grant_type: str = 'authorization_code', **kwargs) -> dict:
+        if "data" not in kwargs:
             # Get defaults
             func = {
                 'authorization_code': self._get_default_authorization_code_request_data,
                 'client_credentials': self._get_default_client_credentials_request_data,
             }.get(grant_type)
 
-            request_data = await func(**kwargs)
-        return await self.hit_oauth_endpoint("post", "token", data=request_data)
+            kwargs['data'] = await func(**kwargs)
+        return await self.hit_oauth_endpoint("post", "token", data=kwargs['data'])
 
     def create_jwt(self, kid: str, signing_key: str = None, claims: dict = None, algorithm: str = "RS512") -> bytes:
         """Create a Json Web Token"""
