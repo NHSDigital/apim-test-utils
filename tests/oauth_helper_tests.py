@@ -69,7 +69,7 @@ async def test_oauth_client_credentials(_test_app):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_custom_token_request_with_authorization_code(_oauth):
+async def test_oauth_custom_token_request_authorization_code(_oauth):
     resp = await _oauth.get_token_response(grant_type='authorization_code', data={
         'client_id': _oauth.client_id,
         'client_secret': _oauth.client_secret,
@@ -83,7 +83,7 @@ async def test_oauth_custom_token_request_with_authorization_code(_oauth):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_custom_token_request_with_client_credentials(_oauth):
+async def test_oauth_custom_token_request_client_credentials(_oauth):
     jwt = "NotAValidJwt"
     resp = await _oauth.get_token_response(grant_type='client_credentials', data={
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",

@@ -1,6 +1,7 @@
 from os import environ
 from uuid import uuid4
 from time import time
+from ast import literal_eval
 import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
 from api_test_utils.api_session_client import APISessionClient
@@ -87,7 +88,7 @@ class OauthHelper:
                     if isinstance(body, bytes):
                         try:
                             # In case json response was of type bytes
-                            body = eval(body)
+                            body = literal_eval(body)
                         except SyntaxError:
                             # Else convert into a string
                             body = str(body, "UTF-8")
