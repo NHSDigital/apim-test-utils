@@ -63,8 +63,8 @@ class ApigeeApiProducts(ApigeeApi):
         """ Update the product environments """
         permitted_environments = ["internal-dev", "internal-dev-sandbox", "internal-qa", "internal-qa-sandbox", "ref"]
         if not set(environments) <= set(permitted_environments):
-            raise Exception(f"Failed updating environments! specified environments not permitted: {environments}"
-                            f"\n Please specify valid environments: {permitted_environments}")
+            raise RuntimeError(f"Failed updating environments! specified environments not permitted: {environments}"
+                               f"\n Please specify valid environments: {permitted_environments}")
         self.environments = environments
         return self._update_product()
 
@@ -86,7 +86,7 @@ class ApigeeApiProducts(ApigeeApi):
                                     json=self._product()) as resp:
 
                 if resp.status in {401, 502}:  # 401 is an expired token while 502 is an invalid token
-                    raise Exception("Your token has expired or is invalid")
+                    raise RuntimeError("Your Apigee token has expired or is invalid")
 
                 body = await resp.json()
                 if resp.status == 409:
