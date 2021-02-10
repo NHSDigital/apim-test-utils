@@ -86,12 +86,14 @@ class OauthHelper:
                     body = await resp.read()
 
                     if isinstance(body, bytes):
+                        # Convert into a string
+                        body = str(body, "UTF-8")
                         try:
                             # In case json response was of type bytes
                             body = literal_eval(body)
                         except SyntaxError:
-                            # Else convert into a string
-                            body = str(body, "UTF-8")
+                            # Continue
+                            pass
 
                 return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
                         'headers': dict(resp.headers.items()), 'history': resp.history}
