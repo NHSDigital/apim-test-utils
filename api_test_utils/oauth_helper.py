@@ -21,13 +21,13 @@ class OauthHelper:
     def _get_proxy():
         _proxy = environ.get('OAUTH_PROXY', 'not-set').strip()
         if _proxy == 'not-set':
-            raise Exception('\nOAUTH_PROXY is missing from environment variables\n')
+            raise RuntimeError('\nOAUTH_PROXY is missing from environment variables\n')
         return _proxy
 
     def _get_base_uri(self):
         _uri = environ.get('OAUTH_BASE_URI', 'not-set').strip()
         if _uri == 'not-set':
-            raise Exception('\nOAUTH_BASE_URI is missing from environment variables\n')
+            raise RuntimeError('\nOAUTH_BASE_URI is missing from environment variables\n')
         return f"{_uri}/{self.proxy}"
 
     @staticmethod
@@ -35,11 +35,11 @@ class OauthHelper:
         """Return the contents of a private key"""
         _path = environ.get("JWT_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
         if _path == 'not-set':
-            raise Exception("\nJWT_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
+            raise RuntimeError("\nJWT_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
         with open(_path, "r") as f:
             contents = f.read()
         if not contents:
-            raise Exception("Contents of file empty. Check JWT_PRIVATE_KEY_ABSOLUTE_PATH.")
+            raise RuntimeError("Contents of file empty. Check JWT_PRIVATE_KEY_ABSOLUTE_PATH.")
         return contents
 
     async def get_authenticated_with_simulated_auth(self) -> str:
@@ -84,6 +84,14 @@ class OauthHelper:
                     # Might be html or text response
                     body = await resp.read()
 
+                    if isinstance(body, bytes):
+                        try:
+                            # In case json response was of type bytes
+                            body = eval(body)
+                        except SyntaxError:
+                            # Else convert into a string
+                            body = str(body, "UTF-8")
+
                 return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
                         'headers': dict(resp.headers.items()), 'history': resp.history}
 
@@ -98,8 +106,17 @@ class OauthHelper:
             kwargs['data'] = await func(**kwargs)
         return await self.hit_oauth_endpoint("post", "token", data=kwargs['data'])
 
-    def create_jwt(self, kid: str, signing_key: str = None, claims: dict = None, algorithm: str = "RS512") -> bytes:
+    def create_jwt(self,
+                   kid: str,
+                   signing_key: str = None,
+                   claims: dict = None,
+                   algorithm: str = "RS512",
+                   client_id: str = None
+                   ) -> bytes:
         """Create a Json Web Token"""
+        if client_id is None:
+            # Get default client id
+            client_id = self.client_id
         if not signing_key:
             # Get default key
             signing_key = self._get_private_key()
@@ -107,8 +124,8 @@ class OauthHelper:
         if not claims:
             # Get default claims
             claims = {
-                "sub": self.client_id,
-                "iss": self.client_id,
+                "sub": client_id,
+                "iss": client_id,
                 "jti": str(uuid4()),
                 "aud": f"{self.base_uri}/token",
                 "exp": int(time()) + 5,
