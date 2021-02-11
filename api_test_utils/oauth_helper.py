@@ -48,14 +48,18 @@ class OauthHelper:
         authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri)
         return await authenticator.authenticate()
 
-    async def _get_default_authorization_code_request_data(self, timeout: int = 5000, refresh_token: str = "") -> dict:
+    async def _get_default_authorization_code_request_data(self,
+                                                           grant_type,
+                                                           timeout: int = 5000,
+                                                           refresh_token: str = None
+                                                           ) -> dict:
         """Get the default data required for a authorization code request"""
         form_data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
-            'grant_type': "authorization_code",
+            'grant_type': grant_type,
         }
-        if refresh_token != "":
+        if refresh_token:
             form_data['refresh_token'] = refresh_token
             form_data['_refresh_token_expiry_ms'] = timeout
         else:
@@ -65,12 +69,12 @@ class OauthHelper:
         return form_data
 
     @staticmethod
-    async def _get_default_client_credentials_request_data(_jwt: bytes) -> dict:
+    async def _get_default_client_credentials_request_data(grant_type: str, _jwt: bytes) -> dict:
         """Get the default data required for a client credentials request"""
         return {
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
             "client_assertion": _jwt,
-            "grant_type": "client_credentials",
+            "grant_type": grant_type,
         }
 
     async def hit_oauth_endpoint(self, method: str, endpoint: str, **kwargs) -> dict:
@@ -98,15 +102,16 @@ class OauthHelper:
                 return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
                         'headers': dict(resp.headers.items()), 'history': resp.history}
 
-    async def get_token_response(self, grant_type: str = 'authorization_code', **kwargs) -> dict:
+    async def get_token_response(self, grant_type: str, **kwargs) -> dict:
         if "data" not in kwargs:
             # Get defaults
             func = {
                 'authorization_code': self._get_default_authorization_code_request_data,
+                'refresh_token': self._get_default_authorization_code_request_data,
                 'client_credentials': self._get_default_client_credentials_request_data,
             }.get(grant_type)
 
-            kwargs['data'] = await func(**kwargs)
+            kwargs['data'] = await func(grant_type, **kwargs)
         return await self.hit_oauth_endpoint("post", "token", data=kwargs['data'])
 
     def create_jwt(self,
