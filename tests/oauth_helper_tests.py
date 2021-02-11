@@ -95,3 +95,12 @@ async def test_oauth_custom_token_request_client_credentials(_oauth):
         'error': 'invalid_request',
         'error_description': 'Malformed JWT in client_assertion'
     }
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_oauth_refresh_token(_oauth):
+    _resp = await _oauth.get_token_response(grant_type='authorization_code')
+    resp = await _oauth.get_token_response(grant_type="refresh_token", refresh_token=_resp['body']['refresh_token'])
+
+    assert resp['status_code'] == 200
