@@ -1,3 +1,4 @@
+import re
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
@@ -21,7 +22,7 @@ class ApigeeApiProducts(ApigeeApi):
             {"name": "ratelimit", "value": self.rate_limit}
         ]
         self.quota = 500
-        self.quota_interval = "1"
+        self.quota_interval = 1
         self.quota_time_unit = "minute"
 
     def _product(self):
@@ -40,13 +41,33 @@ class ApigeeApiProducts(ApigeeApi):
             "proxies": self.proxies
         }
 
-    def update_ratelimits(self, quota: int, quota_interval: str, quota_time_unit: str, rate_limit: str):
+    def update_ratelimits(self,
+                          quota: int = None,
+                          quota_interval: int = None,
+                          quota_time_unit: str = None,
+                          rate_limit: str = None):
         """ Update the product set quota values """
-        self.quota = quota
-        self.quota_interval = quota_interval
-        self.quota_time_unit = quota_time_unit
-        self.rate_limit = rate_limit
-        self.attributes[1]["value"] = rate_limit
+        if quota:
+            if not isinstance(quota, int) and not quota > 0:
+                raise TypeError(f"Requested quota: {quota_interval} not permitted.\n"
+                                f"Please specify valid interval: integer that greater than zero")
+            self.quota = quota
+        if quota_interval:
+            if not isinstance(quota_interval, int) and not quota_interval > 0:
+                raise TypeError(f"Requested time interval: {quota_interval} not permitted.\n"
+                                f"Please specify valid interval: integer that greater than zero")
+            self.quota_interval = quota_interval
+        if quota_time_unit:
+            if not re.match("^minute|hour|day|week|month$", quota_time_unit):
+                raise ValueError(f"Requested time unit: {quota_time_unit} not permitted.\n"
+                                 f"Please specify valid time unit: minute, hour, day, week, or month")
+            self.quota_time_unit = quota_time_unit
+        if rate_limit:
+            if not re.match("^[1-9]\d*(ps|pm)$", rate_limit):
+                raise ValueError(f"Requested rate limit: {rate_limit} not permitted.\n"
+                                 f"Please specify valid time unit: int[ps|pm]")
+            self.rate_limit = rate_limit
+            self.attributes[1]["value"] = rate_limit
         return self._update_product()
 
     def update_attributes(self, attributes: dict):

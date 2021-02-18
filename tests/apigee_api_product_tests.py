@@ -85,11 +85,11 @@ async def test_apigee_update_product_scopes(_api):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason='waiting for move to azure devops')
+# @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_update_quota_values(_api):
     resp = await _api.update_ratelimits(
         quota=600,
-        quota_interval="1",
+        quota_interval=1,
         quota_time_unit="minute",
         rate_limit="15ps"
     )
@@ -101,7 +101,7 @@ async def test_apigee_update_quota_values(_api):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_apigee_product_environments_updates(_api):
+async def test_apigee_product_environments_update(_api):
     resp = await _api.update_environments(
         environments=["internal-dev", "internal-qa"]
     )
@@ -110,6 +110,34 @@ async def test_apigee_product_environments_updates(_api):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_apigee_invalid_product_environments_updates(_api):
+async def test_apigee_invalid_product_environments_update(_api):
     with pytest.raises(RuntimeError):
         await _api.update_environments(["invalid"])
+
+
+@pytest.mark.asyncio
+# @pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_invalid_quota_time_unit_update(_api):
+    with pytest.raises(ValueError):
+        await _api.update_ratelimits(quota_time_unit="years")
+
+
+@pytest.mark.asyncio
+# @pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_invalid_quota_interval_update(_api):
+    with pytest.raises(TypeError):
+        await _api.update_ratelimits(quota_interval="one")
+
+
+@pytest.mark.asyncio
+# @pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_invalid_quota_update(_api):
+    with pytest.raises(TypeError):
+        await _api.update_ratelimits(quota="one")
+
+
+@pytest.mark.asyncio
+# @pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_invalid_ratelimit_update(_api):
+    with pytest.raises(ValueError):
+        await _api.update_ratelimits(rate_limit="one")
