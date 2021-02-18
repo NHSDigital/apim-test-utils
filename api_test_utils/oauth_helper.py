@@ -6,6 +6,7 @@ import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
+import asyncio
 
 
 class OauthHelper:
@@ -77,30 +78,41 @@ class OauthHelper:
             "grant_type": grant_type,
         }
 
+    @staticmethod
+    async def _retry_requests(make_request, max_retries):
+        retry_codes = {429, 503, 409}
+        for retry_number in range(max_retries):
+            resp = await make_request()
+            if resp.status in retry_codes:
+                await asyncio.sleep(2 ** retry_number - 1)
+                continue
+            return resp
+        raise TimeoutError("Maximum retry limit hit.")
+
     async def hit_oauth_endpoint(self, method: str, endpoint: str, **kwargs) -> dict:
         """Send a request to a OAuth endpoint"""
         async with APISessionClient(self.base_uri) as session:
             request_method = (session.post, session.get)[method.lower().strip() == 'get']
-            async with request_method(endpoint, allow_retries=True, **kwargs) as resp:
-                try:
-                    body = await resp.json()
-                    _ = body.pop('message_id', None)  # Remove the unique message id if the response is na error
-                except ContentTypeError:
-                    # Might be html or text response
-                    body = await resp.read()
+            resp = await self._retry_requests(lambda: request_method(endpoint, **kwargs), 5)
+            try:
+                body = await resp.json()
+                _ = body.pop('message_id', None)  # Remove the unique message id if the response is na error
+            except ContentTypeError:
+                # Might be html or text response
+                body = await resp.read()
 
-                    if isinstance(body, bytes):
-                        # Convert into a string
-                        body = str(body, "UTF-8")
-                        try:
-                            # In case json response was of type bytes
-                            body = literal_eval(body)
-                        except SyntaxError:
-                            # Continue
-                            pass
+                if isinstance(body, bytes):
+                    # Convert into a string
+                    body = str(body, "UTF-8")
+                    try:
+                        # In case json response was of type bytes
+                        body = literal_eval(body)
+                    except SyntaxError:
+                        # Continue
+                        pass
 
-                return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
-                        'headers': dict(resp.headers.items()), 'history': resp.history}
+            return {'method': resp.method, 'url': resp.url, 'status_code': resp.status, 'body': body,
+                    'headers': dict(resp.headers.items()), 'history': resp.history}
 
     async def get_token_response(self, grant_type: str, **kwargs) -> dict:
         if "data" not in kwargs:
@@ -159,7 +171,7 @@ class _SimulatedAuthFlow:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.get("authorize", allow_retries=True, params=params) as resp:
+            async with session.get("authorize", params=params) as resp:
                 body = await resp.read()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())
