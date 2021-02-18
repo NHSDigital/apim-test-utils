@@ -63,7 +63,17 @@ async def test_apigee_update_product_proxies(_api):
     resp = await _api.update_proxies(
         proxies=["identity-service-internal-dev"]
     )
+    print(resp.json())
     assert resp['proxies'] == ["identity-service-internal-dev"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
+async def test_apigee_update_product_paths(_api):
+    resp = await _api.update_paths(
+        paths=["/", "/*"]
+    )
+    assert resp['apiResources'] == ["/", "/*"]
 
 
 @pytest.mark.asyncio
