@@ -2,11 +2,11 @@ from os import environ
 from uuid import uuid4
 from time import time
 from ast import literal_eval
+import asyncio
 import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
-import asyncio
 
 
 class OauthHelper:
