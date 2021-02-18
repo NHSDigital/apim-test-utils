@@ -11,6 +11,7 @@ class ApigeeApiProducts(ApigeeApi):
 
         # Default product properties
         self.scopes = []
+        self.api_resources = []
         self.environments = ["internal-dev"]
         self.access = "public"
         self.rate_limit = "10ps"
@@ -25,7 +26,7 @@ class ApigeeApiProducts(ApigeeApi):
 
     def _product(self):
         return {
-            "apiResources": [],
+            "apiResources": self.api_resources,
             "approvalType": "auto",
             "attributes": self.attributes,
             "description": "",
@@ -76,6 +77,11 @@ class ApigeeApiProducts(ApigeeApi):
     def update_proxies(self, proxies: list):
         """ Update the product assigned proxies """
         self.proxies = proxies
+        return self._update_product()
+
+    def update_paths(self, paths: list):
+        """ Update the product assigned paths """
+        self.api_resources = paths
         return self._update_product()
 
     async def create_new_product(self) -> dict:
