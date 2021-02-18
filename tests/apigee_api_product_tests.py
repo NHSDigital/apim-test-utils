@@ -63,7 +63,6 @@ async def test_apigee_update_product_proxies(_api):
     resp = await _api.update_proxies(
         proxies=["identity-service-internal-dev"]
     )
-    print(resp.json())
     assert resp['proxies'] == ["identity-service-internal-dev"]
 
 
