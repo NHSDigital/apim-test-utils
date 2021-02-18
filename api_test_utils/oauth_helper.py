@@ -81,7 +81,7 @@ class OauthHelper:
         """Send a request to a OAuth endpoint"""
         async with APISessionClient(self.base_uri) as session:
             request_method = (session.post, session.get)[method.lower().strip() == 'get']
-            async with request_method(endpoint, **kwargs) as resp:
+            async with request_method(endpoint, allow_retries=True, **kwargs) as resp:
                 try:
                     body = await resp.json()
                     _ = body.pop('message_id', None)  # Remove the unique message id if the response is na error
@@ -159,7 +159,7 @@ class _SimulatedAuthFlow:
         }
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.get("authorize", params=params) as resp:
+            async with session.get("authorize", allow_retries=True, params=params) as resp:
                 body = await resp.read()
                 if resp.status != 200:
                     headers = dict(resp.headers.items())

@@ -21,7 +21,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
             "developer_email": self.developer_email,
         }
 
-    async def create_new_app(self, callback_url: str = "http://example.com") -> dict:
+    async def create_new_app(self, callback_url: str = "http://example.com", status: str = "approved") -> dict:
         """ Create a new developer app in apigee """
         self.callback_url = callback_url
 
@@ -29,7 +29,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
             "attributes": [{"name": "DisplayName", "value": self.name}],
             "callbackUrl": self.callback_url,
             "name": self.name,
-            "status": "approved"
+            "status": status
         }
 
         async with APISessionClient(self.app_base_uri) as session:
