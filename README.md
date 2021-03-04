@@ -3,7 +3,7 @@ NHSD helpers for API testing.
 
 
 ## Setup
-A wheel is built each time this repository is updated. This will be hosted on [Github]().
+A wheel is built each time this repository is updated. This will be hosted on [Github](https://github.com/NHSDigital/apim-test-utils/releases).
 
 ### Install using pip
 You can either download the .whl or point directly to the source.
@@ -28,8 +28,8 @@ api-test-utils = {url = "https://github.com/NHSDigital/apim-test-utils/releases/
 * PDS (WIP)
 
 
-## Get starter with the OAuthHelper
-The OAuthHelper is a collection of functions to help make it easier for a tester to communicate with identity service 
+## Get started with the OAuthHelper
+The OAuthHelper is a collection of methods to help make it easier for a tester to communicate with identity service 
 e.g. requesting an access token or creating a jwt.
 
 ### Basic example below:
@@ -91,6 +91,7 @@ async def example():
    oauth = OauthHelper(app.client_id, app.client_secret, app.callback_url)
    
    # Delete the app and the product
+   # Note here the app must be destroyed before the product
    await app.destroy_app()
    await product.destroy_product()
 ```
