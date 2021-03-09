@@ -33,16 +33,26 @@ class OauthHelper:
         return f"{_uri}/{self.proxy}"
 
     @staticmethod
-    def _get_private_key():
+    def _read_file(file):
+        with open(file, "r") as f:
+            contents = f.read()
+        if not contents:
+            raise RuntimeError(f"Contents of file {file} is empty.")
+        return contents
+
+    def _get_private_key(self):
         """Return the contents of a private key"""
         _path = environ.get("JWT_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
         if _path == 'not-set':
             raise RuntimeError("\nJWT_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
-        with open(_path, "r") as f:
-            contents = f.read()
-        if not contents:
-            raise RuntimeError("Contents of file empty. Check JWT_PRIVATE_KEY_ABSOLUTE_PATH.")
-        return contents
+        return self._read_file(_path)
+
+    def _get_id_token_private_key(self):
+        """Return the contents of a private key"""
+        _path = environ.get("ID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
+        if _path == 'not-set':
+            raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
+        return self._read_file(_path)
 
     async def get_authenticated_with_simulated_auth(self) -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
@@ -54,7 +64,7 @@ class OauthHelper:
                                                            timeout: int = 5000,
                                                            refresh_token: str = None
                                                            ) -> dict:
-        """Get the default data required for a authorization code request"""
+        """Get the default data required for an authorization_code or refresh_token request"""
         form_data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -70,8 +80,20 @@ class OauthHelper:
         return form_data
 
     @staticmethod
-    async def _get_default_client_credentials_request_data(grant_type: str, _jwt: bytes) -> dict:
-        """Get the default data required for a client credentials request"""
+    async def _get_default_jwt_request_data(grant_type: str, _jwt: bytes, id_token_jwt: bytes = None) -> dict:
+        """Get the default data required for a client credentials or token exchange request"""
+        if grant_type.strip().lower() == "token_exchange":
+            if not id_token_jwt:
+                # This argument is required if you are using token exchange
+                raise TypeError("missing 1 required keyword argument: 'id_token_jwt'")
+            return {
+                'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+                'subject_token_type': 'urn:ietf:params:oauth:token-type:id_token',
+                'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+                'subject_token': id_token_jwt,
+                'client_assertion': _jwt
+            }
+        # Get the default data required for a client credentials request
         return {
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
             "client_assertion": _jwt,
@@ -115,12 +137,14 @@ class OauthHelper:
                     'headers': dict(resp.headers.items()), 'history': resp.history}
 
     async def get_token_response(self, grant_type: str, **kwargs) -> dict:
+        """Get a token response through any of the available OAuth grant type flows"""
         if "data" not in kwargs:
             # Get defaults
             func = {
                 'authorization_code': self._get_default_authorization_code_request_data,
                 'refresh_token': self._get_default_authorization_code_request_data,
-                'client_credentials': self._get_default_client_credentials_request_data,
+                'client_credentials': self._get_default_jwt_request_data,
+                'token_exchange': self._get_default_jwt_request_data,
             }.get(grant_type)
 
             kwargs['data'] = await func(grant_type, **kwargs)
@@ -153,6 +177,44 @@ class OauthHelper:
 
         headers = ({}, {"kid": kid})[kid is not None]
         return jwt.encode(claims, signing_key, algorithm=algorithm, headers=headers)
+
+    def get_id_token_jwt(self,
+                         kid: str = "identity-service-tests-1",
+                         signing_key: str = None,
+                         claims: dict = None,
+                         algorithm: str = "RS256"
+                         ) -> bytes:
+        """Get the default ID token JWT"""
+        if not signing_key:
+            # Get default key
+            signing_key = self._get_id_token_private_key()
+
+        if not claims:
+            # Get defaults
+            claims = {
+                'at_hash': 'tf_-lqpq36lwO7WmSBIJ6Q',
+                'sub': '787807429511',
+                'auditTrackingId': '91f694e6-3749-42fd-90b0-c3134b0d98f6-1546391',
+                'amr': ['N3_SMARTCARD'],
+                'iss': 'https://am.nhsint.ptl.nhsd-esa.net:443/'
+                       'openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
+                'tokenName': 'id_token',
+                'aud': '969567331415.apps.national',
+                'c_hash': 'bc7zzGkClC3MEiFQ3YhPKg',
+                'acr': 'AAL3_ANY',
+                'org.forgerock.openidconnect.ops': '-I45NjmMDdMa-aNF2sr9hC7qEGQ',
+                's_hash': 'LPJNul-wow4m6Dsqxbning',
+                'azp': '969567331415.apps.national',
+                'auth_time': 1610559802,
+                'realm': '/NHSIdentity/Healthcare',
+                'exp': int(time()) + 6000,
+                'tokenType': 'JWTToken',
+                'iat': int(time()) - 100
+            }
+        return self.create_jwt(kid=kid,
+                               signing_key=signing_key,
+                               claims=claims,
+                               algorithm=algorithm)
 
 
 class _SimulatedAuthFlow:
