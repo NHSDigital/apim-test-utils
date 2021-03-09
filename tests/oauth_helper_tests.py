@@ -15,6 +15,15 @@ async def _test_app():
     await test_app.create_new_app(callback_url="https://nhsd-apim-testing-internal-dev.herokuapp.com/callback")
     await test_app.add_api_product(["internal-testing-internal-dev"])
 
+    # Set JWT Testing resource url
+    await test_app.set_custom_attributes(
+        {
+            'jwks-resource-url': 'https://raw.githubusercontent.com/NHSDigital/'
+                                 'identity-service-jwks/main/jwks/internal-dev/'
+                                 '9baed6f4-1361-4a8e-8531-1f8426e3aba8.json'
+        }
+    )
+
     yield test_app
     # teardown
     print("\nDestroying Test App..")
@@ -49,21 +58,9 @@ async def test_oauth_authorization_code(_oauth):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_client_credentials(_test_app):
-    # Set JWT Testing resource url
-    await _test_app.set_custom_attributes(
-        {
-            'jwks-resource-url': 'https://raw.githubusercontent.com/NHSDigital/'
-                                 'identity-service-jwks/main/jwks/internal-dev/'
-                                 '9baed6f4-1361-4a8e-8531-1f8426e3aba8.json'
-        }
-    )
-
-    oauth = OauthHelper(client_id=_test_app.client_id, client_secret=_test_app.client_secret,
-                        redirect_uri=_test_app.callback_url)
-
-    jwt = oauth.create_jwt(kid="test-1")
-    resp = await oauth.get_token_response(grant_type='client_credentials', _jwt=jwt)
+async def test_oauth_client_credentials(_oauth):
+    jwt = _oauth.create_jwt(kid="test-1")
+    resp = await _oauth.get_token_response(grant_type='client_credentials', _jwt=jwt)
     assert resp['status_code'] == 200
 
 
@@ -108,23 +105,11 @@ async def test_oauth_refresh_token(_oauth):
 
 @pytest.mark.asyncio
 @pytest.mark.skip(reason='waiting for move to azure devops')
-async def test_oauth_token_exchange(_test_app):
-    # Set JWT Testing resource url
-    await _test_app.set_custom_attributes(
-        {
-            'jwks-resource-url': 'https://raw.githubusercontent.com/NHSDigital/'
-                                 'identity-service-jwks/main/jwks/internal-dev/'
-                                 '9baed6f4-1361-4a8e-8531-1f8426e3aba8.json'
-        }
-    )
+async def test_oauth_token_exchange(_oauth):
+    jwt = _oauth.create_jwt(kid="test-1")
+    id_token_jwt = _oauth.get_id_token_jwt()
 
-    oauth = OauthHelper(client_id=_test_app.client_id, client_secret=_test_app.client_secret,
-                        redirect_uri=_test_app.callback_url)
-
-    jwt = oauth.create_jwt(kid="test-1")
-    id_token_jwt = oauth.get_id_token_jwt()
-
-    resp = await oauth.get_token_response(grant_type='token_exchange', _jwt=jwt, id_token_jwt=id_token_jwt)
+    resp = await _oauth.get_token_response(grant_type='token_exchange', _jwt=jwt, id_token_jwt=id_token_jwt)
     assert resp['status_code'] == 200
 
 
