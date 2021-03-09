@@ -33,11 +33,11 @@ class OauthHelper:
         return f"{_uri}/{self.proxy}"
 
     @staticmethod
-    def _read_file(abs_path):
-        with open(abs_path, "r") as f:
+    def _read_file(file):
+        with open(file, "r") as f:
             contents = f.read()
         if not contents:
-            raise RuntimeError(f"Contents of file {abs_path} is empty.")
+            raise RuntimeError(f"Contents of file {file} is empty.")
         return contents
 
     def _get_private_key(self):
