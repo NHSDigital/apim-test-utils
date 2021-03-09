@@ -196,7 +196,8 @@ class OauthHelper:
                 'sub': '787807429511',
                 'auditTrackingId': '91f694e6-3749-42fd-90b0-c3134b0d98f6-1546391',
                 'amr': ['N3_SMARTCARD'],
-                'iss': 'https://am.nhsint.ptl.nhsd-esa.net:443/openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
+                'iss': 'https://am.nhsint.ptl.nhsd-esa.net:443/'
+                       'openam/oauth2/realms/root/realms/NHSIdentity/realms/Healthcare',
                 'tokenName': 'id_token',
                 'aud': '969567331415.apps.national',
                 'c_hash': 'bc7zzGkClC3MEiFQ3YhPKg',
