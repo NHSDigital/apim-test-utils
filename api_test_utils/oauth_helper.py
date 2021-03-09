@@ -33,28 +33,26 @@ class OauthHelper:
         return f"{_uri}/{self.proxy}"
 
     @staticmethod
-    def _get_private_key():
+    def _read_file(abs_path):
+        with open(abs_path, "r") as f:
+            contents = f.read()
+        if not contents:
+            raise RuntimeError(f"Contents of file {abs_path} is empty.")
+        return contents
+
+    def _get_private_key(self):
         """Return the contents of a private key"""
         _path = environ.get("JWT_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
         if _path == 'not-set':
             raise RuntimeError("\nJWT_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
-        with open(_path, "r") as f:
-            contents = f.read()
-        if not contents:
-            raise RuntimeError("Contents of file empty. Check JWT_PRIVATE_KEY_ABSOLUTE_PATH.")
-        return contents
+        return self._read_file(_path)
 
-    @staticmethod
-    def _get_id_token_private_key():
+    def _get_id_token_private_key(self):
         """Return the contents of a private key"""
         _path = environ.get("ID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH", 'not-set').strip()
         if _path == 'not-set':
             raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
-        with open(_path, "r") as f:
-            contents = f.read()
-        if not contents:
-            raise RuntimeError("Contents of file empty. Check ID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH.")
-        return contents
+        return self._read_file(_path)
 
     async def get_authenticated_with_simulated_auth(self) -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
