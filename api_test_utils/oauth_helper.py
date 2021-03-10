@@ -155,7 +155,8 @@ class OauthHelper:
                    signing_key: str = None,
                    claims: dict = None,
                    algorithm: str = "RS512",
-                   client_id: str = None
+                   client_id: str = None,
+                   **kwargs
                    ) -> bytes:
         """Create a Json Web Token"""
         if client_id is None:
@@ -176,14 +177,18 @@ class OauthHelper:
             }
 
         headers = ({}, {"kid": kid})[kid is not None]
+
+        if kwargs.get('headers', None):
+            headers = {**headers, **kwargs['headers']}
         return jwt.encode(claims, signing_key, algorithm=algorithm, headers=headers)
 
-    def get_id_token_jwt(self,
-                         kid: str = "identity-service-tests-1",
-                         signing_key: str = None,
-                         claims: dict = None,
-                         algorithm: str = "RS256"
-                         ) -> bytes:
+    def create_id_token_jwt(self,
+                            kid: str = "identity-service-tests-1",
+                            signing_key: str = None,
+                            claims: dict = None,
+                            algorithm: str = "RS256",
+                            headers: dict = None,
+                            ) -> bytes:
         """Get the default ID token JWT"""
         if not signing_key:
             # Get default key
@@ -214,7 +219,8 @@ class OauthHelper:
         return self.create_jwt(kid=kid,
                                signing_key=signing_key,
                                claims=claims,
-                               algorithm=algorithm)
+                               algorithm=algorithm,
+                               headers=headers)
 
 
 class _SimulatedAuthFlow:
