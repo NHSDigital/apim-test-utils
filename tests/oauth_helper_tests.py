@@ -107,7 +107,7 @@ async def test_oauth_refresh_token(_oauth):
 @pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_oauth_token_exchange(_oauth):
     jwt = _oauth.create_jwt(kid="test-1")
-    id_token_jwt = _oauth.get_id_token_jwt()
+    id_token_jwt = _oauth.create_id_token_jwt()
 
     resp = await _oauth.get_token_response(grant_type='token_exchange', _jwt=jwt, id_token_jwt=id_token_jwt)
     assert resp['status_code'] == 200
