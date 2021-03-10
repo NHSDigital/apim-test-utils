@@ -21,7 +21,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
             "developer_email": self.developer_email,
         }
 
-    async def create_new_app(self, callback_url: str = "http://example.com") -> dict:
+    async def create_new_app(self, callback_url: str = "http://example.com", status: str = "approved") -> dict:
         """ Create a new developer app in apigee """
         self.callback_url = callback_url
 
@@ -29,7 +29,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
             "attributes": [{"name": "DisplayName", "value": self.name}],
             "callbackUrl": self.callback_url,
             "name": self.name,
-            "status": "approved"
+            "status": status
         }
 
         async with APISessionClient(self.app_base_uri) as session:
@@ -39,7 +39,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
                                     json=data) as resp:
 
                 if resp.status in {401, 502}:  # 401 is an expired token while 502 is an invalid token
-                    raise Exception("Your token has expired or is invalid")
+                    raise RuntimeError("Your Apigee token has expired or is invalid")
 
                 body = await resp.json()
                 if resp.status == 409:
@@ -186,22 +186,22 @@ class ApigeeApiDeveloperApps(ApigeeApi):
     def get_client_id(self):
         """ Get the client id """
         if not self.client_id:
-            raise Exception("\nthe application has not been created! \n"
-                            "please invoke 'create_new_app()' method before requesting the client_id")
+            raise RuntimeError("\nthe application has not been created! \n"
+                               "please invoke 'create_new_app()' method before requesting the client_id")
         return self.client_id
 
     def get_client_secret(self):
         """ Get the client secret """
         if not self.client_secret:
-            raise Exception("\nthe application has not been created! \n"
-                            "please invoke 'create_new_app()' method before requesting the client secret")
+            raise RuntimeError("\nthe application has not been created! \n"
+                               "please invoke 'create_new_app()' method before requesting the client secret")
         return self.client_secret
 
     async def get_callback_url(self) -> str:
         """ Get the callback url """
         if not self.callback_url:
-            raise Exception("\nthe application has not been created! \n"
-                            "please invoke 'create_new_app()' method before requesting the callback url")
+            raise RuntimeError("\nthe application has not been created! \n"
+                               "please invoke 'create_new_app()' method before requesting the callback url")
         return self.callback_url
 
     async def destroy_app(self) -> dict:

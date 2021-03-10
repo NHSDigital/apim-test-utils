@@ -15,8 +15,8 @@ class ApigeeApi:
     def _get_token():
         _token = environ.get('APIGEE_API_TOKEN', 'not-set').strip()
         if _token == 'not-set':
-            raise Exception('\nAPIGEE_API_TOKEN is missing from environment variables\n'
-                            'If you do not have a token please follow the instructions in the link below:\n'
-                            r'https://docs.apigee.com/api-platform/system-administration/using-gettoken'
-                            '\n')
+            raise RuntimeError('\nAPIGEE_API_TOKEN is missing from environment variables\n'
+                               'If you do not have a token please follow the instructions in the link below:\n'
+                               r'https://docs.apigee.com/api-platform/system-administration/using-gettoken'
+                               '\n')
         return _token
