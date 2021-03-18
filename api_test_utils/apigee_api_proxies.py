@@ -1,15 +1,12 @@
+from types import TracebackType
+from typing import Optional, Type
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
-from types import TracebackType
-from typing import Optional, Type
 
 
 class ApigeeApiProxies(ApigeeApi):
     """ Create dummy Apigee proxies for testing purposes """
-
-    def __init__(self, org_name: str = "nhsd-nonprod"):
-        super().__init__(org_name)
 
     async def __aenter__(self):
         await self._create_proxy()
@@ -17,7 +14,7 @@ class ApigeeApiProxies(ApigeeApi):
 
     async def _create_proxy(self):
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"apis", headers=self.headers, json={'name': self.name}) as resp:
+            async with session.post("apis", headers=self.headers, json={'name': self.name}) as resp:
                 body = await resp.json()
                 if resp.status != 201:
                     headers = dict(resp.headers.items())

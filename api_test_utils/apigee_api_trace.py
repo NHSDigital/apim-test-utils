@@ -1,3 +1,4 @@
+from ast import literal_eval
 from api_test_utils.apigee_api import ApigeeApi
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
@@ -32,7 +33,7 @@ class ApigeeApiTraceDebug(ApigeeApi):
                                          headers=headers)
 
                 # Get and validate revision number
-                revision = eval(body)[-1]
+                revision = literal_eval(body)[-1]
                 assert revision.isnumeric(), f"Revision must be a number: {revision}"
 
                 self.revision = revision
