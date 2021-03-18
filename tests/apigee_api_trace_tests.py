@@ -1,9 +1,6 @@
 from time import sleep
 import pytest
 from api_test_utils.apigee_api_trace import ApigeeApiTraceDebug
-from api_test_utils.oauth_helper import OauthHelper
-from api_test_utils.apigee_api_apps import ApigeeApiDeveloperApps
-from api_test_utils.apigee_api_proxies import ApigeeApiProxies
 
 
 @pytest.mark.asyncio
@@ -27,6 +24,7 @@ async def _api():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_trace_data():
     api = ApigeeApiTraceDebug(proxy='apim-test')
     await api.start_trace()
@@ -35,12 +33,14 @@ async def test_apigee_get_trace_data():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_get_trace_without_data(_api):
     resp = await _api.get_trace_data()
     assert resp is None
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_stop_trace(_api):
     resp = await _api.stop_trace()
     assert resp['status_code'] == 200
@@ -48,6 +48,7 @@ async def test_apigee_stop_trace(_api):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_stop_trace_without_starting_trace():
     api = ApigeeApiTraceDebug(proxy="personal-demographics-pr-538")
     with pytest.raises(RuntimeError) as exec_info:
@@ -56,6 +57,7 @@ async def test_apigee_stop_trace_without_starting_trace():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason='waiting for move to azure devops')
 async def test_apigee_trace_timeout():
     api = ApigeeApiTraceDebug(proxy="personal-demographics-pr-538", timeout=2)
     resp = await api.start_trace()
