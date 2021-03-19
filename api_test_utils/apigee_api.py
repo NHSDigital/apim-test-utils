@@ -7,7 +7,7 @@ class ApigeeApi:
 
     def __init__(self, org_name: str = "nhsd-nonprod"):
         self.org_name = org_name
-        self.name = f"apim-auto-${uuid4().hex}"
+        self.name = f"apim-auto-{uuid4()}"
         self.base_uri = f"https://api.enterprise.apigee.com/v1/organizations/{self.org_name}/"
         self.headers = {'Authorization': f"Bearer {self._get_token()}"}
 
