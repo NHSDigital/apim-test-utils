@@ -38,3 +38,7 @@ def api_base_uri(
 
 def source_commit_id():
     return os.environ.get('SOURCE_COMMIT_ID', 'not-set')
+
+
+def status_endpoint_api_key():
+    return os.environ.get('STATUS_ENDPOINT_API_KEY', 'not-set')
