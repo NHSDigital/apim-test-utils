@@ -1,4 +1,4 @@
-from typing import Callable, Any, Awaitable, List, Tuple
+from typing import Callable, Any, Awaitable, List, Tuple, Union
 from json import JSONDecodeError
 
 import asyncio
@@ -9,19 +9,47 @@ from multidict import CIMultiDictProxy
 __version__ = "0.0.0"
 
 
-async def is_200(resp: ClientResponse):
+async def is_200(resp: ClientResponse) -> bool:
     return resp.status == 200
 
 
-async def is_404(resp: ClientResponse):
+async def is_200ish(resp: ClientResponse) -> bool:
+    return 199 < resp.status < 300
+
+
+async def is_400(resp: ClientResponse) -> bool:
+    return resp.status == 400
+
+
+async def is_401(resp: ClientResponse) -> bool:
+    return resp.status == 401
+
+
+async def is_403(resp: ClientResponse) -> bool:
+    return resp.status == 403
+
+
+async def is_404(resp: ClientResponse) -> bool:
     return resp.status == 404
+
+
+async def is_400ish(resp: ClientResponse) -> bool:
+    return 399 < resp.status < 500
+
+
+async def is_500(resp: ClientResponse) -> bool:
+    return resp.status == 500
+
+
+async def is_500ish(resp: ClientResponse) -> bool:
+    return 499 < resp.status < 600
 
 
 async def get_text_body(resp: ClientResponse) -> str:
     return await resp.text()
 
 
-async def get_json_body(resp: ClientResponse):
+async def get_json_body(resp: ClientResponse) -> Union[str, dict, list]:
     return await resp.json()
 
 
@@ -29,7 +57,7 @@ async def get_bytes_body(resp: ClientResponse) -> bytes:
     return await resp.read()
 
 
-async def auto_load_body(resp: ClientResponse):
+async def auto_load_body(resp: ClientResponse) -> Union[str, dict, list, bytes]:
     content_type = resp.content_type.lower()
     if 'json' in content_type:
         try:
@@ -44,6 +72,9 @@ async def auto_load_body(resp: ClientResponse):
 
 
 class PollTimeoutError(TimeoutError):
+    """
+        Wraps TimeoutError, but also has a place to hold responses
+    """
 
     def __init__(self, responses: List[Tuple[int, CIMultiDictProxy, Any]]):
         self.responses = responses

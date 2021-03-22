@@ -14,6 +14,7 @@ def api_test_config() -> APITestSessionConfig:
 
 @pytest.mark.asyncio
 async def test_fixture_override_http_bin_post(api_client: APISessionClient):
+
     data = {'test': 'data'}
     async with api_client.post("post", json=data) as resp:
 
