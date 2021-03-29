@@ -21,6 +21,17 @@ class ApigeeApiDeveloperApps(ApigeeApi):
             "developer_email": self.developer_email,
         }
 
+    async def setup_app(
+        self, callback_url: str = "http://example.com", status: str = "approved",
+        api_products: list = None, custom_attributes: dict = None
+    ):
+        await self.create_new_app(callback_url, status)
+        if api_products:
+            await self.add_api_product(api_products)
+
+        if custom_attributes:
+            await self.set_custom_attributes(custom_attributes)
+
     async def create_new_app(self, callback_url: str = "http://example.com", status: str = "approved") -> dict:
         """ Create a new developer app in apigee """
         self.callback_url = callback_url
