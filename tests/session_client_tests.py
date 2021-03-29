@@ -57,7 +57,7 @@ async def test_explicit_uri_http_bin_post(api_client: APISessionClient):
 ])
 async def test_get_status_code_retries(endpoint, should_retry, expected):
     async with APISessionClient("https://httpbin.org") as session:
-        async with await session.get(endpoint, allow_retries=should_retry) as resp:
+        async with session.get(endpoint, allow_retries=should_retry) as resp:
             assert resp.status == expected
 
 

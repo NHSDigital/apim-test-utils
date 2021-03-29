@@ -5,6 +5,7 @@ from typing import Optional, Type, Any
 from urllib.parse import urlparse
 
 import aiohttp
+from aiohttp.client import _RequestContextManager
 from aiohttp.typedefs import StrOrURL
 
 
@@ -38,15 +39,15 @@ class APISessionClient:
         max_retries: int = 5,
         allow_redirects: bool = True,
         **kwargs: Any
-    ) -> "aiohttp._RequestContextManager":
+    ) -> "aiohttp.client._RequestContextManager":
         uri = self._full_url(url)
         if allow_retries:
-            resp = self._retry_requests(
+            resp = _RequestContextManager(self._retry_requests(
                 lambda: self.session.request(
                     method, uri, *args, allow_redirects=allow_redirects, **kwargs
                 ),
                 max_retries=max_retries
-            )
+            ))
         else:
             resp = self.session.request(
                 method, uri, *args, allow_redirects=allow_redirects, **kwargs
