@@ -33,7 +33,7 @@ class ApigeeApiTraceDebug(ApigeeApi):
                                          headers=headers)
 
                 # Get and validate revision number
-                revision = literal_eval(body)[-1]
+                revision = literal_eval(body.decode("UTF-8"))[-1]
                 assert revision.isnumeric(), f"Revision must be a number: {revision}"
 
                 self.revision = revision
@@ -86,11 +86,11 @@ class ApigeeApiTraceDebug(ApigeeApi):
             return None
 
         async with APISessionClient(self.base_uri) as session:
-            async with session.post(f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/"
+            async with session.get(f"environments/{self.env}/apis/{self.proxy}/revisions/{self.revision}/"
                                     f"debugsessions/{self.name}/data/{self.transaction_id}",
                                     headers=self.headers) as resp:
-                body = await resp.read()
-                if resp.status != 201:
+                body = await resp.json()
+                if resp.status != 200:
                     headers = dict(resp.headers.items())
                     throw_friendly_error(message=f"unable to get trace data for session {self.name} "
                                                  f"on proxy {self.proxy}",
