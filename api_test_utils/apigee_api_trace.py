@@ -168,7 +168,7 @@ class ApigeeApiTraceDebug(ApigeeApi):
             for item in result['accessList']:
                 if item.get('Get', {}).get('name', '') == name:
                     return item.get('Get', {}).get('value', '')
-                elif item.get('Set', {}).get('name', '') == name:
+                if item.get('Set', {}).get('name', '') == name:
                     return item.get('Set', {}).get('value', '')
 
         return None
