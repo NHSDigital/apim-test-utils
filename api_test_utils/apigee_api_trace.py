@@ -152,8 +152,8 @@ class ApigeeApiTraceDebug(ApigeeApi):
                     break
         return asid
 
-    def get_apigee_variable_from_trace(self, name: str) -> str or None:
-        data = self.get_trace_data()
+    async def get_apigee_variable_from_trace(self, name: str) -> str or None:
+        data = await self.get_trace_data()
         executions = [x.get('results', None) for x in data['point'] if x.get('id', "") == "Execution"]
         executions = list(filter(lambda x: x != [], executions))
 
@@ -168,6 +168,8 @@ class ApigeeApiTraceDebug(ApigeeApi):
             for item in result['accessList']:
                 if item.get('Get', {}).get('name', '') == name:
                     return item.get('Get', {}).get('value', '')
+                elif item.get('Set', {}).get('name', '') == name:
+                    return item.get('Set', {}).get('value', '')
 
         return None
 
