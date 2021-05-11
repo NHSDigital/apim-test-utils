@@ -282,7 +282,8 @@ class _SimulatedAuthFlow:
 
                 redirect_uri = resp.headers['Location'][resp.headers['Location'].index('callback'):]
 
-                async with session.get(redirect_uri, allow_redirects=False) as callback_resp:
+                async with session.get(redirect_uri, allow_redirects=False,
+                                       headers={"Auto-Test-Header": "flow-callback"}) as callback_resp:
                     headers = dict(callback_resp.headers.items())
                     # Confirm request was successful
                     if callback_resp.status != 302:

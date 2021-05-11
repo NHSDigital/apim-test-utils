@@ -151,3 +151,25 @@ class ApigeeApiTraceDebug(ApigeeApi):
                     asid['application_configured'] = item.get('Get', {}).get('value', None)
                     break
         return asid
+
+    def get_apigee_variable_from_trace(self, name: str) -> str or None:
+        data = self.get_trace_data()
+        executions = [x.get('results', None) for x in data['point'] if x.get('id', "") == "Execution"]
+        executions = list(filter(lambda x: x != [], executions))
+
+        variable_accesses = []
+
+        for execution in executions:
+            for item in execution:
+                if item.get('ActionResult', '') == 'VariableAccess':
+                    variable_accesses.append(item)
+
+        for result in variable_accesses:  # Configured by the application
+            for item in result['accessList']:
+                if item.get('Get', {}).get('name', '') == name:
+                    return item.get('Get', {}).get('value', '')
+
+        return None
+
+    def add_trace_filter(self, header_name: str, header_value: str):
+        self.default_params[f"header_{header_name}"]=header_value
