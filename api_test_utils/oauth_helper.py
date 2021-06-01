@@ -1,4 +1,5 @@
 from os import environ
+import re
 from uuid import uuid4
 from time import time
 from ast import literal_eval
@@ -111,9 +112,12 @@ class OauthHelper:
             return resp
         raise TimeoutError("Maximum retry limit hit.")
 
-    async def hit_oauth_endpoint(self, method: str, endpoint: str, **kwargs) -> dict:
+    async def hit_oauth_endpoint(self, method: str, endpoint: str, base_uri=None, **kwargs) -> dict:
         """Send a request to a OAuth endpoint"""
-        async with APISessionClient(self.base_uri) as session:
+        if not base_uri:
+            base_uri = self.base_uri
+
+        async with APISessionClient(base_uri) as session:
             request_method = (session.post, session.get)[method.lower().strip() == 'get']
             resp = await self._retry_requests(lambda: request_method(endpoint, **kwargs), 5)
             try:
@@ -268,7 +272,8 @@ class _SimulatedAuthFlow:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         payload = {"state": state}
 
-        async with APISessionClient(self.base_uri) as session:
+        mock_proxy_base_uri = "https://internal-dev.api.service.nhs.uk/mock-nhsid-jwks"
+        async with APISessionClient(mock_proxy_base_uri) as session:
             async with session.post("simulated_auth", params=params, data=payload, headers=headers,
                                     allow_redirects=False) as resp:
                 if resp.status != 302:
@@ -280,7 +285,10 @@ class _SimulatedAuthFlow:
                                          response=body,
                                          headers=headers)
 
-                redirect_uri = resp.headers['Location'][resp.headers['Location'].index('callback'):]
+                redirect_uri = resp.headers['Location']
+                if "-pr-" in self.base_uri:
+                    pr_number = re.search(r"-pr-\d+", self.base_uri).group()
+                    redirect_uri = redirect_uri.replace('oauth2', f'oauth2{pr_number}')
 
                 async with session.get(redirect_uri, allow_redirects=False,
                                        headers={"Auto-Test-Header": "flow-callback"}) as callback_resp:
