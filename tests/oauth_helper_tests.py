@@ -18,7 +18,10 @@ async def _test_app():
     # Set JWT Testing resource url
     await test_app.set_custom_attributes(
         {
-            'jwks-resource-url': 'https://nhsdigital.github.io/identity-service-jwks/jwks/internal-dev/9baed6f4-1361-4a8e-8531-1f8426e3aba8.json'
+            'jwks-resource-url': 'https://nhsdigital.github.io/'
+                                 'identity-service-jwks/jwks/'
+                                 'internal-dev/'
+                                 '9baed6f4-1361-4a8e-8531-1f8426e3aba8.json'
         }
     )
 
