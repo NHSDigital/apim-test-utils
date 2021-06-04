@@ -8,6 +8,7 @@ import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
+from . import env
 
 
 class OauthHelper:
@@ -272,7 +273,7 @@ class _SimulatedAuthFlow:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         payload = {"state": state}
 
-        mock_proxy_base_uri = "https://internal-dev.api.service.nhs.uk/mock-nhsid-jwks"
+        mock_proxy_base_uri = f"https://{env.api_env()}.api.service.nhs.uk/mock-nhsid-jwks"
         async with APISessionClient(mock_proxy_base_uri) as session:
             async with session.post("simulated_auth", params=params, data=payload, headers=headers,
                                     allow_redirects=False) as resp:
