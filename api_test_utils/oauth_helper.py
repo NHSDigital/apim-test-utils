@@ -288,7 +288,7 @@ class _SimulatedAuthFlow:
 
                 redirect_uri = resp.headers['Location']
                 if "-pr-" in self.base_uri:
-                    pr_number = re.search(r"-pr-\d+", self.base_uri).group()
+                    pr_number = re.search('(?<=oauth2).*$', self.base_uri).group()
                     redirect_uri = redirect_uri.replace('oauth2', f'oauth2{pr_number}')
 
                 async with session.get(redirect_uri, allow_redirects=False,
