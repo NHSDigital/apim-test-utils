@@ -56,28 +56,31 @@ class OauthHelper:
             raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
         return self._read_file(_path)
 
-    async def get_authenticated_with_simulated_auth(self) -> str:
+    async def get_authenticated_with_simulated_auth(self, scope="") -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
-        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri)
+        self.scope = scope
+        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri, self.scope)
         return await authenticator.authenticate()
 
     async def _get_default_authorization_code_request_data(self,
                                                            grant_type,
                                                            timeout: int = 5000,
-                                                           refresh_token: str = None
+                                                           refresh_token: str = None,
+                                                           scope: str = ""
                                                            ) -> dict:
         """Get the default data required for an authorization_code or refresh_token request"""
         form_data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
             'grant_type': grant_type,
+            'scope': scope
         }
         if refresh_token:
             form_data['refresh_token'] = refresh_token
             form_data['_refresh_token_expiry_ms'] = timeout
         else:
             form_data['redirect_uri'] = self.redirect_uri
-            form_data['code'] = await self.get_authenticated_with_simulated_auth()
+            form_data['code'] = await self.get_authenticated_with_simulated_auth(scope)
             form_data['_access_token_expiry_ms'] = timeout
         return form_data
 
@@ -229,7 +232,8 @@ class OauthHelper:
 
 
 class _SimulatedAuthFlow:
-    def __init__(self, base_uri: str, client_id: str, redirect_uri: str):
+    def __init__(self, base_uri: str, client_id: str, redirect_uri: str, scope: str):
+        self.scope = scope
         self.base_uri = base_uri
         self.client_id = client_id
         self.redirect_uri = redirect_uri
@@ -240,7 +244,8 @@ class _SimulatedAuthFlow:
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "response_type": "code",
-            "state": request_state
+            "state": request_state,
+            "scope": self.scope
         }
 
         async with APISessionClient(self.base_uri) as session:
