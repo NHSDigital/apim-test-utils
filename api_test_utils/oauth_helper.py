@@ -56,7 +56,7 @@ class OauthHelper:
             raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
         return self._read_file(_path)
 
-    async def get_authenticated_with_simulated_auth(self, scope="") -> str:
+    async def get_authenticated_with_simulated_auth(self, scope: str) -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
         self.scope = scope
         authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri, self.scope)
@@ -66,7 +66,7 @@ class OauthHelper:
                                                            grant_type,
                                                            timeout: int = 5000,
                                                            refresh_token: str = None,
-                                                           scope: str = ""
+                                                           scope: str = ''
                                                            ) -> dict:
         """Get the default data required for an authorization_code or refresh_token request"""
         form_data = {
