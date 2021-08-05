@@ -58,8 +58,8 @@ class OauthHelper:
 
     async def get_authenticated_with_simulated_auth(self, scope: str) -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
-        self.scope = scope
-        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri, self.scope)
+
+        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri, scope)
         return await authenticator.authenticate()
 
     async def _get_default_authorization_code_request_data(self,
