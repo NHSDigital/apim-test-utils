@@ -296,10 +296,10 @@ class _SimulatedAuthFlow:
                     headers = dict(callback_resp.headers.items())
                     # Confirm request was successful
                     if callback_resp.status != 302:
-                        body = await resp.read()
+                        body = await callback_resp.read()
                         throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
                                              url=resp.url,
-                                             status_code=resp.status,
+                                             status_code=callback_resp.status,
                                              response=body,
                                              headers=headers)
 
