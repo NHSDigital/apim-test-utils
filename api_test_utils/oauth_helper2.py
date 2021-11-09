@@ -11,7 +11,7 @@ from . import throw_friendly_error
 from . import env
 
 
-class OauthHelper:
+class OauthHelper2:
     """ A helper class to interact with the different OAuth flows """
 
     def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
@@ -56,9 +56,9 @@ class OauthHelper:
             raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
         return self._read_file(_path)
 
-    async def get_authenticated_with_simulated_auth(self) -> str:
+    async def get_access_token(self) -> str:
         """Get the code parameter value required to post to the oauth /token endpoint"""
-        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.redirect_uri)
+        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.client_secret, self.redirect_uri)
         return await authenticator.authenticate()
 
     async def _get_default_authorization_code_request_data(self,
