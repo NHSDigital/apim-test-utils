@@ -22,7 +22,7 @@ class ApigeeApiDeveloperApps(ApigeeApi):
         }
 
     async def setup_app(
-        self, callback_url: str = "http://example.com", status: str = "approved",
+        self, callback_url: str = "https://httpbin.org/anything", status: str = "approved",
         api_products: list = None, custom_attributes: dict = None
     ):
         await self.create_new_app(callback_url, status)

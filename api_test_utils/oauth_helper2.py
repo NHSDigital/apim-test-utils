@@ -1,20 +1,35 @@
+from enum import Enum
 from os import environ
 import re
+from typing import List
 from uuid import uuid4
 from time import time
 from ast import literal_eval
 import asyncio
+import urllib.parse
 import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from api_test_utils.api_session_client import APISessionClient
 from . import throw_friendly_error
 from . import env
 
 
+class OAuthProviders(Enum):
+    """
+    Enum for OAuth providers.
+    """
+    SIMULATED = 0
+    MOCK = 1    
+
+
 class OauthHelper2:
     """ A helper class to interact with the different OAuth flows """
 
-    def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
+    def __init__(self, client_id: str, client_secret: str, redirect_uri: str, identity_provider: OAuthProviders = OAuthProviders.SIMULATED):
+        self.identity_provider = identity_provider
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
@@ -56,10 +71,20 @@ class OauthHelper2:
             raise RuntimeError("\nID_TOKEN_PRIVATE_KEY_ABSOLUTE_PATH is missing from environment variables\n")
         return self._read_file(_path)
 
-    async def get_access_token(self) -> str:
+    async def get_authenticated_with_simulated_auth(self, user: str = "9999999999"):
         """Get the code parameter value required to post to the oauth /token endpoint"""
-        authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.client_secret, self.redirect_uri)
-        return await authenticator.authenticate()
+        return self.get_authenticated(user)
+
+    async def get_authenticated(self, user: str = "9999999999", webdriver_session: WebDriver = None) -> str:
+        """Get the code parameter value required to post to the oauth /token endpoint"""
+        if not webdriver_session:
+            raise Exception("Cannot run simulated auth without a webdriver session, please import the \"webdriver_session\" fixture.")
+
+        if self.identity_provider == OAuthProviders.SIMULATED:
+            authenticator = _SimulatedAuthFlow(self.base_uri, self.client_id, self.client_secret, self.redirect_uri)
+        elif self.identity_provider == OAuthProviders.MOCK:
+            authenticator = _RealAuthFlow(self.base_uri, self.client_id, self.client_secret, self.redirect_uri)
+        return await authenticator.authenticate(user, webdriver_session)
 
     async def _get_default_authorization_code_request_data(self,
                                                            grant_type,
@@ -310,9 +335,10 @@ class _SimulatedAuthFlow:
 
 
 class _RealAuthFlow:
-    def __init__(self, base_uri: str, client_id: str, redirect_uri: str):
+    def __init__(self, base_uri: str, client_id: str, client_secret: str, redirect_uri: str):
         self.base_uri = base_uri
         self.client_id = client_id
+        self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
     async def _get_state(self, request_state: str) -> str:
@@ -323,7 +349,7 @@ class _RealAuthFlow:
             "response_type": "code",
             "state": request_state
         }
-
+        
         async with APISessionClient(self.base_uri) as session:
             async with session.get("authorize", params=params) as resp:
                 body = await resp.read()
@@ -341,50 +367,57 @@ class _RealAuthFlow:
                 assert state != request_state
                 return state
 
-    async def authenticate(self, request_state: str = str(uuid4())) -> str:
+    async def authenticate(self, user: str, webdriver_session: WebDriver = None, request_state: str = str(uuid4())) -> str:
         """Authenticate and retrieve the code value"""
-        state = await self._get_state(request_state)
-        params = {
+        # state = await self._get_state(request_state)
+        params = urllib.parse.urlencode([(k, v) for k, v in {
             "response_type": "code",
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
-            "scope": "openid",
-            "state": state
-        }
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        payload = {"state": state}
+            "state": request_state
+        }.items()])
 
-        mock_proxy_base_uri = f"https://{env.api_env()}.api.service.nhs.uk/mock-nhsid-jwks"
-        async with APISessionClient(mock_proxy_base_uri) as session:
-            async with session.post("simulated_auth", params=params, data=payload, headers=headers,
-                                    allow_redirects=False) as resp:
-                if resp.status != 302:
-                    body = await resp.json()
-                    headers = dict(resp.headers.items())
-                    throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
-                                         url=resp.url,
-                                         status_code=resp.status,
-                                         response=body,
-                                         headers=headers)
+        authorize_url = f"{self.base_uri}/authorize?{params}"
 
-                redirect_uri = resp.headers['Location']
-                if "-pr-" in self.base_uri:
-                    pr_number = re.search('(?<=oauth2).*$', self.base_uri).group()
-                    redirect_uri = redirect_uri.replace('oauth2', f'oauth2{pr_number}')
+        webdriver_session.get(authorize_url)
+        webdriver_session.implicitly_wait(1)
+        username = webdriver_session.find_element(By.ID, 'username')
+        username.send_keys(user + Keys.ENTER)
+        webdriver_session.implicitly_wait(5)
+        code = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(webdriver_session.current_url).query))["code"]
+        return code
 
-                async with session.get(redirect_uri, allow_redirects=False,
-                                       headers={"Auto-Test-Header": "flow-callback"}) as callback_resp:
-                    headers = dict(callback_resp.headers.items())
-                    # Confirm request was successful
-                    if callback_resp.status != 302:
-                        body = await callback_resp.read()
-                        throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
-                                             url=resp.url,
-                                             status_code=callback_resp.status,
-                                             response=body,
-                                             headers=headers)
+        # mock_proxy_base_uri = f"https://{env.api_env()}.api.service.nhs.uk/mock-nhsid-jwks"
+        # async with APISessionClient(mock_proxy_base_uri) as session:
+        #     async with session.post("simulated_auth", params=params, data=payload, headers=headers,
+        #                             allow_redirects=False) as resp:
+        #         if resp.status != 302:
+        #             body = await resp.json()
+        #             headers = dict(resp.headers.items())
+        #             throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
+        #                                  url=resp.url,
+        #                                  status_code=resp.status,
+        #                                  response=body,
+        #                                  headers=headers)
 
-                    # Get code value from location parameters
-                    query = headers['Location'].split("?")[1]
-                    params = {x[0]: x[1] for x in [x.split("=") for x in query.split("&")]}
-                    return params['code']
+        #         redirect_uri = resp.headers['Location']
+        #         if "-pr-" in self.base_uri:
+        #             pr_number = re.search('(?<=oauth2).*$', self.base_uri).group()
+        #             redirect_uri = redirect_uri.replace('oauth2', f'oauth2{pr_number}')
+
+        #         async with session.get(redirect_uri, allow_redirects=False,
+        #                                headers={"Auto-Test-Header": "flow-callback"}) as callback_resp:
+        #             headers = dict(callback_resp.headers.items())
+        #             # Confirm request was successful
+        #             if callback_resp.status != 302:
+        #                 body = await callback_resp.read()
+        #                 throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
+        #                                      url=resp.url,
+        #                                      status_code=callback_resp.status,
+        #                                      response=body,
+        #                                      headers=headers)
+
+        #             # Get code value from location parameters
+        #             query = headers['Location'].split("?")[1]
+        #             params = {x[0]: x[1] for x in [x.split("=") for x in query.split("&")]}
+        #             return params['code']
