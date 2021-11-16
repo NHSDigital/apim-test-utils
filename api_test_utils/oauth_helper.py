@@ -4,8 +4,8 @@ from uuid import uuid4
 from time import time
 from ast import literal_eval
 import asyncio
-import jwt  # pyjwt
 import urllib
+import jwt  # pyjwt
 from aiohttp.client_exceptions import ContentTypeError
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.by import By
@@ -69,7 +69,7 @@ class OauthHelper:
     async def get_authenticated_with_simulated_auth(self):
         """Get the code parameter value required to post to the oauth /token endpoint"""
         authenticator = _SimulatedAuthFlow(
-            self.base_uri, self.client_id, self.client_secret, self.redirect_uri
+            self.base_uri, self.client_id, self.redirect_uri
         )
         return await authenticator.authenticate()
 
@@ -441,38 +441,3 @@ class _RealAuthFlow:
             )
         )["code"]
         return code
-
-        # mock_proxy_base_uri = f"https://{env.api_env()}.api.service.nhs.uk/mock-nhsid-jwks"
-        # async with APISessionClient(mock_proxy_base_uri) as session:
-        #     async with session.post("simulated_auth", params=params, data=payload, headers=headers,
-        #                             allow_redirects=False) as resp:
-        #         if resp.status != 302:
-        #             body = await resp.json()
-        #             headers = dict(resp.headers.items())
-        #             throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
-        #                                  url=resp.url,
-        #                                  status_code=resp.status,
-        #                                  response=body,
-        #                                  headers=headers)
-
-        #         redirect_uri = resp.headers['Location']
-        #         if "-pr-" in self.base_uri:
-        #             pr_number = re.search('(?<=oauth2).*$', self.base_uri).group()
-        #             redirect_uri = redirect_uri.replace('oauth2', f'oauth2{pr_number}')
-
-        #         async with session.get(redirect_uri, allow_redirects=False,
-        #                                headers={"Auto-Test-Header": "flow-callback"}) as callback_resp:
-        #             headers = dict(callback_resp.headers.items())
-        #             # Confirm request was successful
-        #             if callback_resp.status != 302:
-        #                 body = await callback_resp.read()
-        #                 throw_friendly_error(message="unexpected response, unable to authenticate with simulated oauth",
-        #                                      url=resp.url,
-        #                                      status_code=callback_resp.status,
-        #                                      response=body,
-        #                                      headers=headers)
-
-        #             # Get code value from location parameters
-        #             query = headers['Location'].split("?")[1]
-        #             params = {x[0]: x[1] for x in [x.split("=") for x in query.split("&")]}
-        #             return params['code']

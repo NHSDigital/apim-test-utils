@@ -1,7 +1,7 @@
 import os
 import pytest
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestsConnectionError
 from selenium import webdriver
 
 from api_test_utils.api_session_client import APISessionClient
@@ -29,7 +29,7 @@ def webdriver_service(docker_ip, docker_services):
     def is_responsive(url):
         try:
             response = requests.get(url)
-        except ConnectionError:
+        except RequestsConnectionError:
             return False
         else:
             body = response.json()
