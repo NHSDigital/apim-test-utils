@@ -15,6 +15,8 @@ pytest = "^6.1.2"
 pytest-asyncio = "^0.14.0"
 pyjwt = "^2.0.1"
 cryptography = "^3.3.1"
+requests = "^2.26.0"
+selenium = "^4.0.0"
 
 
 [tool.poetry.dev-dependencies]
@@ -22,6 +24,7 @@ coverage = "^5.3"
 pylint = "^2.6.0"
 semver = "^2.9.0"
 gitpython = "^3.0.5"
+black = {version = "^21.10b0", allow-prereleases = true}
 
 [tool.pytest.ini_options]
 python_files = "*_tests.py test_*.py"
