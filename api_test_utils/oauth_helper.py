@@ -66,12 +66,12 @@ class OauthHelper:
             )
         return self._read_file(_path)
 
-    async def get_authenticated_with_simulated_auth(self, user: str = "9999999999"):
+    async def get_authenticated_with_simulated_auth(self):
         """Get the code parameter value required to post to the oauth /token endpoint"""
         authenticator = _SimulatedAuthFlow(
             self.base_uri, self.client_id, self.client_secret, self.redirect_uri
         )
-        return await authenticator.authenticate(user)
+        return await authenticator.authenticate()
 
     async def get_authenticated_with_mock_auth(
         self, user: str = "9999999999", webdriver_session: WebDriver = None
