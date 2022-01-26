@@ -17,6 +17,7 @@ pyjwt = "^2.0.1"
 cryptography = "^3.3.1"
 requests = "^2.26.0"
 selenium = "^4.0.0"
+pytest-docker = "^0.10.3"
 
 
 [tool.poetry.dev-dependencies]
