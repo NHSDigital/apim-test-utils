@@ -21,7 +21,7 @@ jobs:
     - name: upgrade pip and install poetry
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install poetry dephell
+        pip install poetry dephell --upgrade
 
     - name: Cache poetry packages
       uses: actions/cache@v1
