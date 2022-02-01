@@ -43,7 +43,7 @@ jobs:
 
         sed -e "s/version = \"0.0.0\"/version = \"${VERSION}\"/" -i pyproject.toml
         sed -e "s/__version__ = \"0.0.0\"/__version__ = \"${VERSION}\"/" -i api_test_utils/__init__.py
-        dephell deps convert --from=pyproject.toml --to=setup.py
+        poetry run dephell deps convert --from=pyproject.toml --to=setup.py
         make dist
         echo ::set-env name=WHL_FILE::$(find dist -type f -name '*.whl')
         echo ::set-env name=WHL_NAME::$(find dist -type f -name '*.whl' | sed 's#dist/##')
