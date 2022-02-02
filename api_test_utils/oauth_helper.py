@@ -1,8 +1,12 @@
 from os import environ
 import re
+import requests
+import json
+from lxml import html
 from uuid import uuid4
 from time import time
 from ast import literal_eval
+from urllib.parse import urlparse, parse_qs
 import asyncio
 import urllib
 import jwt  # pyjwt
@@ -73,19 +77,45 @@ class OauthHelper:
         )
         return await authenticator.authenticate()
 
-    async def get_authenticated_with_mock_auth(
-        self, user: str = "9999999999", webdriver_session: WebDriver = None
+    def get_authenticated_with_mock_auth(
+        self, user: str = "9999999999"
     ) -> str:
-        """Get the code parameter value required to post to the oauth /token endpoint"""
-        if not webdriver_session:
-            raise Exception(
-                'Cannot run simulated auth without a webdriver session, please import the "webdriver_session" fixture.'
-            )
-
-        authenticator = _RealAuthFlow(
-            self.base_uri, self.client_id, self.client_secret, self.redirect_uri
+        session = requests.Session()
+        resp = session.get(
+            f"{self.base_uri}/authorize",
+            params={
+                "client_id": self.client_id,
+                "redirect_uri": self.redirect_uri,
+                "response_type": "code",
+                "state": "1234567890",
+            },
         )
-        return await authenticator.authenticate(user, webdriver_session)
+
+        if resp.status_code != 200:
+            raise RuntimeError(json.dumps(resp.json(), indent=2))
+
+        tree = html.fromstring(resp.content.decode())
+
+        form = tree.get_element_by_id("kc-form-login")
+        url = form.action
+        resp2 = session.post(url, data={"username": user})
+
+        qs = urlparse(resp2.history[-1].headers["Location"]).query
+        auth_code = parse_qs(qs)["code"]
+        if isinstance(auth_code, list):
+            auth_code = auth_code[0]
+
+        resp3 = session.post(
+            f"{self.base_uri}/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": auth_code,
+                "redirect_uri": self.redirect_uri,
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+            },
+        )
+        return resp3.json()
 
     async def _get_default_authorization_code_request_data(
         self, grant_type, timeout: int = 5000, refresh_token: str = None
