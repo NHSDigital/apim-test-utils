@@ -19,6 +19,7 @@ requests = "^2.26.0"
 selenium = "^4.0.0"
 pytest-docker = "^0.10.3"
 docker-compose = "^1.29.2"
+lxml = "^4.7.1"
 
 
 [tool.poetry.dev-dependencies]
