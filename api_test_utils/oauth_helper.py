@@ -1,7 +1,6 @@
 from os import environ
 import re
 import requests
-import sys
 import json
 from lxml import html
 from uuid import uuid4
@@ -77,7 +76,7 @@ class OauthHelper:
             self.base_uri, self.client_id, self.redirect_uri
         )
         return await authenticator.authenticate()
-    
+
     def get_authenticated_with_mock_auth(
         self, user: str = "9999999999"
     ) -> str:
@@ -93,9 +92,8 @@ class OauthHelper:
         )
 
         if resp.status_code != 200:
-            print(json.dumps(resp.json(), indent=2))
-            sys.exit(1)
-        
+            raise RuntimeError(json.dumps(resp.json(), indent=2))
+
         tree = html.fromstring(resp.content.decode())
 
         form = tree.get_element_by_id("kc-form-login")
