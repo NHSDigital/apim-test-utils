@@ -72,9 +72,6 @@ class OauthHelper:
 
     async def get_authenticated_with_simulated_auth(self):
         """Get the code parameter value required to post to the oauth /token endpoint"""
-        self.proxy = "oauth2"
-        self._get_base_uri()
-
         authenticator = _SimulatedAuthFlow(
             self.base_uri, self.client_id, self.redirect_uri
         )
@@ -83,8 +80,6 @@ class OauthHelper:
     def get_authenticated_with_mock_auth(
         self, user: str = "9999999999"
     ) -> str:
-        self.proxy = "oauth2-mock"
-        self._get_base_uri()
         session = requests.Session()
 
         resp = session.get(
