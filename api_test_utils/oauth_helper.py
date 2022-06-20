@@ -70,12 +70,12 @@ class OauthHelper:
             )
         return self._read_file(_path)
 
-    async def get_authenticated_with_simulated_auth(self):
+    async def get_authenticated_with_simulated_auth(self, auth_scope: str = ""):
         """Get the code parameter value required to post to the oauth /token endpoint"""
         authenticator = _SimulatedAuthFlow(
             self.base_uri, self.client_id, self.redirect_uri
         )
-        return await authenticator.authenticate()
+        return await authenticator.authenticate(auth_scope=auth_scope)
 
     def get_authenticated_with_mock_auth(
         self, user: str = "9999999999"
@@ -310,13 +310,14 @@ class _SimulatedAuthFlow:
         self.client_id = client_id
         self.redirect_uri = redirect_uri
 
-    async def _get_state(self, request_state: str) -> str:
+    async def _get_state(self, request_state: str, auth_scope: str = "") -> str:
         """Send an authorize request and retrieve the state"""
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "response_type": "code",
             "state": request_state,
+            "scope": auth_scope,
         }
 
         async with APISessionClient(self.base_uri) as session:
@@ -338,9 +339,9 @@ class _SimulatedAuthFlow:
                 assert state != request_state
                 return state
 
-    async def authenticate(self, request_state: str = str(uuid4())) -> str:
+    async def authenticate(self, request_state: str = str(uuid4()), auth_scope: str = "") -> str:
         """Authenticate and retrieve the code value"""
-        state = await self._get_state(request_state)
+        state = await self._get_state(request_state, auth_scope=auth_scope)
         params = {
             "response_type": "code",
             "client_id": self.client_id,
