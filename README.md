@@ -1,6 +1,10 @@
-# Apim Test Utils
-NHSD helpers for API testing.
+# DEPRECATED: Apim Test Utils
 
+
+> :warning: 2023-02 "APIM Test Utils 1.0" is DEPRECATED and will be RETIRED in the not-too-distant future. See Epic APM-3579 for progress on this.
+> Please use the superior "APIM Test Utils 2.0" AKA [pytest-nhsd-apim](https://github.com/NHSDigital/pytest-nhsd-apim), available directly through PyPI as `pytest-nhsd-apim`. Internal documentation [on Confluence](https://nhsd-confluence.digital.nhs.uk/display/APM/APIM+Test+Utils+2.0+plugin)
+
+NHSD helpers for API testing.
 
 ## Setup
 A wheel is built each time this repository is updated. This will be hosted on [Github](https://github.com/NHSDigital/apim-test-utils/releases).
